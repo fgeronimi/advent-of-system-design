@@ -8,7 +8,6 @@ const SHEET_EASE = 'cubic-bezier(.76,0,.18,1)';
 const TILT_Z = -4.5;
 const BLOBS = [0, 120, 220, 300, 360, 420, 180];
 const CREAM = '#EFE6D2';
-const ART = { y: 430, h: 350 }; // zone d'illustration de la jaquette : 406 × 350 (≈ 7:6)
 const INK = '#141414';
 const SERIF = 'Newsreader, Georgia, serif';
 const SANS = 'Inter Tight, system-ui, sans-serif';
@@ -56,9 +55,18 @@ function wrapTitle(title, max) {
 // Resserre le texte s'il déborde, comme une typo condensée de jaquette.
 const fit = (text, size, ratio, max) => (text.length * size * ratio > max ? ` textLength="${max}" lengthAdjust="spacingAndGlyphs"` : '');
 
+const cellOf = (c, i) => (CELLS.length ? CELLS[c.cell ?? i % CELLS.length] : null);
+// Affiche la région [x, y, w, h] de la planche dans le cadre (dx, dy, dw, dh) : le <svg> imbriqué
+// sert de fenêtre et découpe le reste.
+const sheetCrop = ([x, y, w, h], dx, dy, dw, dh, fitMode = 'none') =>
+  `<svg x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="${fitMode}">`
+  + `<image href="${esc(SHEET.url)}" width="${SHEET.w}" height="${SHEET.h}"/></svg>`;
+
 function coverArt(c, i, sealed) {
   const { bg, label } = CATEGORIES[c.cat];
+  const cell = cellOf(c, i);
   let out = `<rect width="474" height="900" fill="${CREAM}"/>`;
+  if (cell) out += sheetCrop(cell, 0, 0, 474, 900);
   const lines = wrapTitle(c.title.toUpperCase(), 10);
   const fs = lines.length <= 2 ? 78 : lines.length === 3 ? 64 : 54;
   out += `<rect x="16" y="16" width="442" height="868" fill="none" stroke="${INK}" stroke-opacity=".22" stroke-width="2"/>`;
@@ -72,11 +80,7 @@ function coverArt(c, i, sealed) {
   const en = c.en.toUpperCase();
   out += `<text x="237" y="${y + 10}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}"${fit(en, 13, 0.78, 400)}>${esc(en)}</text>`;
 
-  // Seule la zone d'illustration vient de l'image générée : le texte reste en SVG, les IA
-  // d'image écrivent mal (surtout les accents).
-  if (c.cover) {
-    out += `<image href="${esc(c.cover)}" x="34" y="${ART.y}" width="406" height="${ART.h}" preserveAspectRatio="xMidYMid meet"/>`;
-  } else {
+  if (!cell) {
     const cy = 612, r = 148;
     out += `<circle cx="237" cy="${cy}" r="${r}" fill="${bg}"/>`;
     for (let dy = 78; dy < r; dy += 16) {
@@ -104,8 +108,11 @@ function spineArt(c, i, sealed) {
   const { bg, fg } = CATEGORIES[c.cat];
   let out = `<rect width="142" height="840" fill="${bg}"/>`;
   out += `<rect x="7" y="7" width="128" height="826" fill="none" stroke="${fg}" stroke-opacity=".35" stroke-width="1.5"/>`;
-  if (c.cover) {
-    out += `<image href="${esc(c.cover)}" x="16" y="22" width="110" height="116" preserveAspectRatio="xMidYMid slice"/>`;
+  const cell = cellOf(c, i);
+  if (cell) {
+    // Vignette : le milieu de la jaquette, là où se trouve l'illustration.
+    const [x, y, w, h] = cell;
+    out += sheetCrop([x, y + h * 0.3, w, h * 0.55], 16, 22, 110, 116, 'xMidYMid slice');
   } else {
     out += `<circle cx="71" cy="80" r="46" fill="${fg}"/>`;
     out += `<text x="71" y="82" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="50" letter-spacing="-1" fill="${bg}">${pad(i + 1)}</text>`;
@@ -121,6 +128,9 @@ function spineArt(c, i, sealed) {
   }
   return out;
 }
+
+// Préchargée dès le départ pour que la première cassette ouverte ne montre jamais une jaquette vide.
+new Image().src = SHEET.url;
 
 const svg = (w, h, inner) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
 

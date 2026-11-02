@@ -4,8 +4,8 @@
 // - en       : nom anglais, affiché en sous-titre cobalt
 // - pitch    : une phrase, affichée sous le titre dans la page d'explication
 // - art      : idée d'illustration, à injecter dans le prompt de génération (voir PROMPTS.md)
-// - cover    : chemin de l'illustration générée (ex. 'assets/covers/strangler-fig.webp'), sinon
-//              la couverture est dessinée en SVG
+// - cell     : optionnel, index de la case de SHEET à utiliser. Par défaut le jour N prend la case
+//              N-1, et on boucle sur les cases s'il y en a moins que de jours.
 // - body     : contenu détaillé. Absent = page « bientôt » avec le pitch seul.
 //              Dans les textes, `code` et **gras** sont reconnus.
 
@@ -18,6 +18,26 @@ const CATEGORIES = {
   securite: { label: 'Sécurité', bg: '#5B2A4A', fg: '#EFE6D2' },
 };
 
+// Planche d'illustrations : une seule image, découpée en 24 cases de jaquette (ratio ≈ 474:900).
+// Pour l'instant, c'est la planche des 12 jaquettes de films empilée deux fois (4 colonnes × 6 lignes).
+// Les textes de la jaquette sont dessinés en SVG par-dessus.
+const SHEET = {
+  url: 'assets/covers/sheet.webp',
+  w: 1744,
+  h: 4672,
+};
+
+// Cases [x, y, largeur, hauteur] en pixels de la planche, dans l'ordre de lecture.
+// Les lignes 4 à 6 sont les lignes 1 à 3 décalées d'une demi-planche (2336 px).
+const CELLS = [
+  [74, 72, 347, 659], [497, 72, 344, 659], [914, 72, 342, 659], [1332, 72, 344, 659],
+  [74, 813, 344, 676], [497, 815, 344, 674], [915, 815, 342, 675], [1331, 815, 345, 675],
+  [74, 1571, 345, 681], [496, 1577, 343, 678], [913, 1579, 343, 676], [1331, 1579, 344, 677],
+  [74, 2408, 347, 659], [497, 2408, 344, 659], [914, 2408, 342, 659], [1332, 2408, 344, 659],
+  [74, 3149, 344, 676], [497, 3151, 344, 674], [915, 3151, 342, 675], [1331, 3151, 345, 675],
+  [74, 3907, 345, 681], [496, 3913, 343, 678], [913, 3915, 343, 676], [1331, 3915, 344, 677],
+];
+
 const CONCEPTS = [
   {
     slug: 'strangler-fig',
@@ -26,7 +46,6 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Remplacer un vieux système morceau par morceau, en l’enveloppant jusqu’à pouvoir le couper.',
     art: 'un figuier étrangleur dont les racines enlacent un ordinateur beige des années 80',
-    cover: null,
     body: {
       problem: [
         'Ton monolithe a quinze ans, personne n’ose toucher au module de facturation, et chaque release prend une semaine de recette. La tentation : tout réécrire from scratch.',
@@ -73,7 +92,6 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Rejouer une requête dix fois doit avoir le même effet que l’exécuter une seule fois.',
     art: 'un tampon encreur qui frappe dix fois la même case d’un formulaire, une seule marque visible',
-    cover: null,
   },
   {
     slug: 'conway',
@@ -82,7 +100,6 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Ton architecture finit toujours par ressembler à ton organigramme.',
     art: 'un organigramme dont les cases se transforment en serveurs reliés par des câbles',
-    cover: null,
   },
   {
     slug: 'cqrs',
@@ -91,7 +108,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Séparer le modèle qui écrit du modèle qui lit, et laisser chacun être bon dans son rôle.',
     art: 'une route qui se sépare en deux voies, l’une pour des camions qui livrent, l’autre pour des lecteurs de journaux',
-    cover: null,
   },
   {
     slug: 'circuit-breaker',
@@ -100,7 +116,6 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Arrêter d’appeler un service qui tombe, pour qu’il ne t’entraîne pas dans sa chute.',
     art: 'un disjoncteur électrique géant, levier abaissé, petites étincelles autour',
-    cover: null,
   },
   {
     slug: 'outbox',
@@ -109,7 +124,6 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Écrire en base et publier un événement sans jamais perdre l’un ou l’autre.',
     art: 'une boîte aux lettres posée sur une armoire à dossiers, des enveloppes qui s’en échappent',
-    cover: null,
   },
   {
     slug: 'n-plus-un',
@@ -118,7 +132,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Une requête pour la liste, puis une par élément : la page qui rame sans raison apparente.',
     art: 'un serveur de restaurant épuisé qui fait cent allers-retours pour apporter cent couverts',
-    cover: null,
   },
   {
     slug: 'crypto-shredding',
@@ -127,7 +140,6 @@ const CONCEPTS = [
     cat: 'securite',
     pitch: 'Effacer une donnée partout, même dans les backups, en détruisant seulement sa clé.',
     art: 'une clé ancienne passée dans un broyeur à papier, des confettis de lettres chiffrées',
-    cover: null,
   },
   {
     slug: 'expand-contract',
@@ -136,7 +148,6 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Changer un schéma ou une API sans casser personne : élargir, migrer, puis resserrer.',
     art: 'un accordéon à moitié déplié posé sur une pile de tables de base de données',
-    cover: null,
   },
   {
     slug: 'rate-limiting',
@@ -145,7 +156,6 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Dire non poliment avant que le trafic ne te dise non brutalement.',
     art: 'un seau percé qui laisse tomber des jetons un par un dans un entonnoir',
-    cover: null,
   },
   {
     slug: 'sharding',
@@ -154,7 +164,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Découper une base trop grosse en morceaux qui vivent sur des machines différentes.',
     art: 'un grand vase de porcelaine brisé en fragments, chaque fragment posé sur un serveur',
-    cover: null,
   },
   {
     slug: 'brooks',
@@ -163,7 +172,6 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Ajouter des gens à un projet en retard le met encore plus en retard.',
     art: 'une foule de maçons qui se marchent dessus autour d’un seul petit mur de briques',
-    cover: null,
   },
   {
     slug: 'saga',
@@ -172,7 +180,6 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Une transaction répartie sur plusieurs services, avec un plan de repli à chaque étape.',
     art: 'une rangée de dominos qui tombent, dont les derniers se relèvent dans l’autre sens',
-    cover: null,
   },
   {
     slug: 'cache-stampede',
@@ -181,7 +188,6 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Une clé chaude expire, et mille requêtes foncent en même temps sur la base.',
     art: 'un troupeau de bisons qui charge vers un petit coffre-fort ouvert',
-    cover: null,
     body: {
       problem: [
         'Ta page d’accueil est servie depuis un cache Redis avec un TTL de cinq minutes. Ça tient très bien la charge… jusqu’à la seconde où la clé expire en plein pic.',
@@ -226,7 +232,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Répartir des clés sur des serveurs sans tout redistribuer quand on en ajoute un.',
     art: 'un grand cadran d’horloge circulaire sur lequel sont posés de petits serveurs',
-    cover: null,
   },
   {
     slug: 'canary',
@@ -235,7 +240,6 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Envoyer la nouvelle version à 1 % du trafic, et regarder si le canari chante encore.',
     art: 'un canari dans une petite cage suspendue à l’entrée d’une mine, une lampe de mineur à côté',
-    cover: null,
   },
   {
     slug: 'depot-fichier',
@@ -244,7 +248,6 @@ const CONCEPTS = [
     cat: 'securite',
     pitch: 'Accepter des fichiers d’inconnus sans laisser entrer le loup : quarantaine, antivirus, désarmement.',
     art: 'un colis posé dans une cage de verre, traversé par un faisceau de scanner',
-    cover: null,
   },
   {
     slug: 'event-sourcing',
@@ -253,7 +256,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Ne plus stocker l’état, mais la suite d’événements qui y a mené.',
     art: 'un long ruban de bande magnétique qui se déroule, chaque segment marqué d’un symbole',
-    cover: null,
   },
   {
     slug: 'tracing',
@@ -262,7 +264,6 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Suivre une requête de service en service pour savoir où passent les millisecondes.',
     art: 'une loupe qui suit un fil rouge tendu entre plusieurs serveurs',
-    cover: null,
   },
   {
     slug: 'backpressure',
@@ -271,7 +272,6 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Quand le consommateur sature, il doit pouvoir dire au producteur de ralentir.',
     art: 'un tuyau d’arrosage avec un nœud, la pression qui le fait gonfler en amont',
-    cover: null,
   },
   {
     slug: 'geo',
@@ -280,7 +280,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Trouver les dix livreurs les plus proches parmi un million, sans calculer un million de distances.',
     art: 'une carte découpée en carrés imbriqués de plus en plus petits, une épingle au centre',
-    cover: null,
   },
   {
     slug: 'dora',
@@ -289,7 +288,6 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Quatre chiffres pour savoir si ton équipe livre vite et bien, ou juste vite.',
     art: 'le tableau de bord d’une voiture ancienne avec quatre cadrans à aiguille',
-    cover: null,
   },
   {
     slug: 'monolithe-modulaire',
@@ -298,7 +296,6 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Des frontières de microservices, sans le réseau entre elles.',
     art: 'un grand bloc de pierre taillé en compartiments, comme une boîte à outils',
-    cover: null,
   },
   {
     slug: 'cap',
@@ -307,7 +304,6 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Quand le réseau se coupe, il faut choisir : répondre faux, ou ne pas répondre.',
     art: 'un triangle dont les trois sommets portent une balance, une lampe allumée et une prise débranchée',
-    cover: null,
   },
 ];
 

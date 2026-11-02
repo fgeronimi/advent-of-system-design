@@ -1,30 +1,36 @@
 # Illustrations des jaquettes
 
-L'image générée ne remplace **que la zone d'illustration** de la jaquette (406 × 350, soit environ 7:6).
-Le titre, le sous-titre anglais, le numéro du jour et le badge VHS restent dessinés en SVG par `app.js` :
-les générateurs d'images écrivent mal le texte, surtout avec des accents.
+Toutes les jaquettes viennent d'**une seule image**, la planche `assets/covers/sheet.webp`, découpée en
+24 cases (4 colonnes × 6 lignes). Chaque case couvre toute la face avant de la cassette, au ratio
+474:900 (≈ 1:1,9). Le titre, le sous-titre anglais, le numéro du jour et le badge VHS sont dessinés en
+SVG par-dessus par `app.js` : l'illustration ne doit donc contenir **aucun texte**.
 
-## Brancher une image
+Pour l'instant, la planche est celle des 12 jaquettes de films empilée deux fois : les textes des films
+s'y superposent encore aux textes SVG, c'est attendu.
 
-1. Générer l'image au format **7:6** (ex. 1400 × 1200), **sans aucun texte**.
-2. L'exporter en WebP dans `assets/covers/<slug>.webp` (le `slug` est dans `concepts.js`).
-3. Dans `concepts.js`, remplacer `cover: null` par `cover: 'assets/covers/<slug>.webp'`.
+## Changer la planche
 
-La tranche réutilise automatiquement un recadrage carré du centre de l'image.
+1. Produire la nouvelle planche : 24 illustrations verticales 1:1,9, sans texte, rangées en 4 × 6.
+2. L'exporter en WebP : `cwebp -q 85 planche.png -o assets/covers/sheet.webp`.
+   Les PNG de `assets/covers/` sont ignorés par git, seul le WebP est versionné.
+3. Dans `concepts.js`, mettre à jour `SHEET` (largeur, hauteur) et les 24 boîtes de `CELLS`
+   (`[x, y, largeur, hauteur]` en pixels, dans l'ordre de lecture : case 1 = jour 1).
+
+La tranche réutilise automatiquement le milieu de la case comme vignette.
 
 ## Prompt de base
 
-Garder ce bloc identique pour les 24 images. Seul `{SUJET}` change, il vient du champ `art` de chaque concept.
+Garder ce bloc identique pour les 24 cases. Seul `{SUJET}` change, il vient du champ `art` de chaque concept.
 
 ```
 Vintage screen-print illustration for a 1980s VHS tape cover, duotone risograph style,
 limited palette of ink black (#141414), cobalt blue (#1F3FB0), vermilion red (#C8412B)
 and cream (#EFE6D2), visible halftone dots and slight ink misregistration, flat shapes,
-bold silhouettes, worn paper texture, centered composition with generous margins,
-plain cream background.
+bold silhouettes, worn paper texture, full-bleed vertical composition, illustration filling the whole front of the box,
+worn cardboard edges.
 Subject: {SUJET}.
 No text, no letters, no numbers, no logos, no frame, no border.
-Aspect ratio 7:6.
+Vertical aspect ratio 1:1.9.
 ```
 
 Pour une famille de jaquettes plus cohérente, on peut ajouter la couleur dominante du thème :

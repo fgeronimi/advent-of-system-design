@@ -14,7 +14,7 @@ Pas de build, pas de dépendance. Servir le dossier avec n'importe quel serveur 
 
 - `concepts.js` : les données. `CATEGORIES`, `CONCEPTS` (un objet par jour, dans l'ordre) et `DIAGRAMS` (schémas SVG).
 - `app.js` : le moteur. Une boucle `requestAnimationFrame` pilote l'étagère, la Web Animations API gère les transitions.
-- Jaquettes et tranches dessinées en SVG inline (`coverArt`, `spineArt`). Avec `cover`, seule la zone d'illustration vient de l'image.
+- Jaquettes et tranches dessinées en SVG inline (`coverArt`, `spineArt`). L'illustration de fond vient d'une case de la planche `SHEET` / `CELLS` (`concepts.js`).
 - Verrouillage par date côté client, année dans `ADVENT_YEAR` (`app.js`). Contournable, c'est assumé.
 - `styles.css` + `fonts.css` (Newsreader et Inter Tight, sous-ensemble latin, auto-hébergées dans `fonts/`).
 
@@ -24,4 +24,4 @@ Pas de build, pas de dépendance. Servir le dossier avec n'importe quel serveur 
 - Un concept sans `body` affiche une fiche « bientôt » avec le pitch seul.
 - Textes : seuls `` `code` `` et `**gras**` sont interprétés (`fmt` dans `app.js`), le reste est échappé.
 - Les schémas utilisent les classes `.k-*` de `styles.css` pour les couleurs, pas de couleurs en dur.
-- Illustrations : voir `PROMPTS.md`, format 7:6, sans texte.
+- Illustrations : une planche unique de 24 cases, voir `PROMPTS.md`.

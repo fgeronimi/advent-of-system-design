@@ -1,2 +1,5 @@
 .DS_Store
 node_modules/
+
+# Sources des illustrations : seules les versions WebP converties sont versionnées
+assets/covers/*.png
