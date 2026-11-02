@@ -58,8 +58,8 @@ const fit = (text, size, ratio, max) => (text.length * size * ratio > max ? ` te
 const cellOf = (c, i) => (CELLS.length ? CELLS[c.cell ?? i % CELLS.length] : null);
 // Affiche la région [x, y, w, h] de la planche dans le cadre (dx, dy, dw, dh) : le <svg> imbriqué
 // sert de fenêtre et découpe le reste.
-const sheetCrop = ([x, y, w, h], dx, dy, dw, dh, fitMode = 'none') =>
-  `<svg x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="${fitMode}">`
+const sheetCrop = ([x, y, w, h], dx, dy, dw, dh) =>
+  `<svg x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="none">`
   + `<image href="${esc(SHEET.url)}" width="${SHEET.w}" height="${SHEET.h}"/></svg>`;
 
 function coverArt(c, i, sealed) {
@@ -108,15 +108,8 @@ function spineArt(c, i, sealed) {
   const { bg, fg } = spineColors[i] || CATEGORIES[c.cat];
   let out = `<rect width="142" height="840" fill="${bg}"/>`;
   out += `<rect x="7" y="7" width="128" height="826" fill="none" stroke="${fg}" stroke-opacity=".35" stroke-width="1.5"/>`;
-  const cell = cellOf(c, i);
-  if (cell) {
-    // Vignette : le milieu de la jaquette, là où se trouve l'illustration.
-    const [x, y, w, h] = cell;
-    out += sheetCrop([x, y + h * 0.3, w, h * 0.55], 16, 22, 110, 116, 'xMidYMid slice');
-  } else {
-    out += `<circle cx="71" cy="80" r="46" fill="${fg}"/>`;
-    out += `<text x="71" y="82" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="50" letter-spacing="-1" fill="${bg}">${pad(i + 1)}</text>`;
-  }
+  out += `<circle cx="71" cy="80" r="46" fill="${fg}"/>`;
+  out += `<text x="71" y="82" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="50" letter-spacing="-1" fill="${bg}">${pad(i + 1)}</text>`;
   const t = c.title.toUpperCase();
   out += `<text transform="translate(71 162) rotate(90)" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="60" letter-spacing="-.5" fill="${fg}"${fit(t, 60, 0.62, 530)}>${esc(t)}</text>`;
   out += `<text x="71" y="738" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2.5" fill="${fg}">JOUR ${pad(i + 1)}</text>`;

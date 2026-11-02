@@ -16,7 +16,7 @@ s'y superposent encore aux textes SVG, c'est attendu.
 3. Dans `concepts.js`, mettre à jour `SHEET` (largeur, hauteur) et les 24 boîtes de `CELLS`
    (`[x, y, largeur, hauteur]` en pixels, dans l'ordre de lecture : case 1 = jour 1).
 
-La tranche réutilise automatiquement le milieu de la case comme vignette.
+La tranche tire automatiquement ses couleurs de la case (fond et texte).
 
 ## Prompt de base
 
