@@ -170,6 +170,14 @@ a { color: var(--ink); text-decoration: none; }
   overflow: visible;
 }
 .cv svg { border-radius: 2px; }
+.sp .wear {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: var(--wear);
+  background-size: 100% 200%;
+}
 .sp::after, .cv::after {
   content: "";
   position: absolute;

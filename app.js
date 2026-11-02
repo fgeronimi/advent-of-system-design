@@ -170,11 +170,53 @@ sheetImg.decode().then(() => {
   }
   for (const t of tapes) {
     const i = t.v % N;
-    t.sp.innerHTML = svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)));
+    t.sp.innerHTML = spineHTML(t.v);
   }
 }).catch(() => {});
 
 const svg = (w, h, inner) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
+
+/* Usure des tranches */
+// Une seule texture pour toutes les tranches : le navigateur la rastérise une fois, puis chaque
+// tranche en montre une fenêtre différente (texture deux fois plus haute qu'une tranche, décalée
+// et parfois retournée) pour que le grain, les arêtes et les plis ne se répètent pas d'une tranche à l'autre.
+const wearTexture = (() => {
+  const H2 = 1680;
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  let creases = '';
+  for (let k = 0; k < 3; k++) {
+    // Pli : une ligne sombre doublée d'une ligne claire, comme un carton marqué.
+    const y = 120 + rnd() * (H2 - 240);
+    creases += `<rect x="0" y="${y}" width="142" height="2" fill="#000" opacity=".16"/><rect x="0" y="${y + 2}" width="142" height="1.5" fill="#fff" opacity=".14"/>`;
+  }
+  const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 ${H2}" width="142" height="${H2}" preserveAspectRatio="none">`
+    + `<filter id="dk"><feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="2" seed="3" stitchTiles="stitch"/>`
+    + `<feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.7 -.95"/></filter>`
+    + `<filter id="lt"><feTurbulence type="fractalNoise" baseFrequency=".6" numOctaves="2" seed="11" stitchTiles="stitch"/>`
+    + `<feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.9 -1.15"/></filter>`
+    + `<filter id="rough" x="-20%" y="0" width="140%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".06 .35" numOctaves="2" seed="5"/>`
+    + `<feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G"/></filter>`
+    + `<rect width="142" height="${H2}" filter="url(#dk)" opacity=".38"/>`
+    + `<rect width="142" height="${H2}" filter="url(#lt)" opacity=".3"/>`
+    + `<g filter="url(#rough)">`
+    + `<rect x="-6" y="0" width="13" height="${H2}" fill="#000" opacity=".26"/>`
+    + `<rect x="135" y="0" width="13" height="${H2}" fill="#000" opacity=".26"/>`
+    + `<rect x="3" y="0" width="3" height="${H2}" fill="#fff" opacity=".2"/>`
+    + `<rect x="136" y="0" width="3" height="${H2}" fill="#fff" opacity=".2"/>`
+    + creases
+    + `</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svgText)}")`;
+})();
+document.documentElement.style.setProperty('--wear', wearTexture);
+
+function spineHTML(v) {
+  const i = v % N;
+  const y = (v * 37) % 100;
+  const flip = v % 3 === 1 ? ' scale(-1, 1)' : v % 3 === 2 ? ' scale(1, -1)' : '';
+  return svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)))
+    + `<div class="wear" style="background-position: 0 ${y}%;${flip ? ` transform:${flip}` : ''}"></div>`;
+}
 
 /* Étagère */
 const stage = $('.stage');
@@ -187,7 +229,7 @@ for (let v = 0; v < LOOP; v++) {
   el.className = 'tape' + (isLocked(i) ? ' locked' : '');
   const sp = document.createElement('div');
   sp.className = 'sp';
-  sp.innerHTML = svg(142, 840, spineArt(c, i, isLocked(i)));
+  sp.innerHTML = spineHTML(v);
   const cv = document.createElement('div');
   cv.className = 'cv';
   cv.innerHTML = svg(474, 900, coverArt(c, i, isLocked(i)));
