@@ -105,7 +105,7 @@ function coverArt(c, i, sealed) {
 }
 
 function spineArt(c, i, sealed) {
-  const { bg, fg } = CATEGORIES[c.cat];
+  const { bg, fg } = spineColors[i] || CATEGORIES[c.cat];
   let out = `<rect width="142" height="840" fill="${bg}"/>`;
   out += `<rect x="7" y="7" width="128" height="826" fill="none" stroke="${fg}" stroke-opacity=".35" stroke-width="1.5"/>`;
   const cell = cellOf(c, i);
@@ -129,8 +129,57 @@ function spineArt(c, i, sealed) {
   return out;
 }
 
+/* Couleurs des tranches, tirées de leur jaquette */
+const lum = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+const hex = (rgb) => '#' + rgb.map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
+
+// Fond = couleur la plus présente dans la case ; texte = la couleur suivante la plus présente qui
+// contraste assez avec ce fond (sinon encre ou crème). Les couleurs sont regroupées par paliers de
+// 16 niveaux par canal pour que les dégradés et la trame ne dispersent pas les votes.
+function cellPalette(ctx, [x, y, w, h], img) {
+  const cw = 48, ch = 92;
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.drawImage(img, x, y, w, h, 0, 0, cw, ch);
+  const px = ctx.getImageData(0, 0, cw, ch).data;
+  const buckets = new Map();
+  let total = 0;
+  for (let k = 0; k < px.length; k += 4) {
+    if (px[k + 3] < 128) continue;
+    const key = ((px[k] >> 4) << 8) | ((px[k + 1] >> 4) << 4) | (px[k + 2] >> 4);
+    const b = buckets.get(key) || { n: 0, rgb: [0, 0, 0] };
+    b.n++;
+    b.rgb[0] += px[k]; b.rgb[1] += px[k + 1]; b.rgb[2] += px[k + 2];
+    buckets.set(key, b);
+    total++;
+  }
+  if (!total) return null;
+  const ranked = [...buckets.values()].sort((a, b) => b.n - a.n).map((b) => ({ n: b.n, rgb: b.rgb.map((v) => v / b.n) }));
+  const bg = ranked[0].rgb;
+  const accent = ranked.find((b) => b.n > total * 0.02 && Math.abs(lum(b.rgb) - lum(bg)) > 0.45);
+  const fg = accent ? accent.rgb : (lum(bg) > 0.5 ? [20, 20, 20] : [239, 230, 210]);
+  return { bg: hex(bg), fg: hex(fg) };
+}
+
+let spineColors = [];
 // Préchargée dès le départ pour que la première cassette ouverte ne montre jamais une jaquette vide.
-new Image().src = SHEET.url;
+const sheetImg = new Image();
+sheetImg.src = SHEET.url;
+sheetImg.decode().then(() => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 48;
+  canvas.height = 92;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  try {
+    spineColors = CONCEPTS.map((c, i) => { const cell = cellOf(c, i); return cell && cellPalette(ctx, cell, sheetImg); });
+  } catch {
+    // Ouvert en file:// : le canvas est « tainted », on garde les couleurs des thèmes.
+    return;
+  }
+  for (const t of tapes) {
+    const i = t.v % N;
+    t.sp.innerHTML = svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)));
+  }
+}).catch(() => {});
 
 const svg = (w, h, inner) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
 
