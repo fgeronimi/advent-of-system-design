@@ -65,20 +65,22 @@ const sheetCrop = ([x, y, w, h], dx, dy, dw, dh) =>
 function coverArt(c, i, sealed) {
   const { bg, label } = CATEGORIES[c.cat];
   const cell = cellOf(c, i);
+  // Sans palette (planche pas encore lue, ou file://), couleurs du thème.
+  const { title: titleInk, text: textInk } = palettes[i]?.cover || { title: bg, text: INK };
   let out = `<rect width="474" height="900" fill="${CREAM}"/>`;
   if (cell) out += sheetCrop(cell, 0, 0, 474, 900);
   const lines = wrapTitle(c.title.toUpperCase(), 10);
   const fs = lines.length <= 2 ? 78 : lines.length === 3 ? 64 : 54;
-  out += `<rect x="16" y="16" width="442" height="868" fill="none" stroke="${INK}" stroke-opacity=".22" stroke-width="2"/>`;
-  out += `<text x="237" y="66" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="3.5" fill="${INK}">ADVENT OF SYSTEM DESIGN</text>`;
-  out += `<line x1="150" y1="84" x2="324" y2="84" stroke="${INK}" stroke-width="1.5"/>`;
+  out += `<rect x="16" y="16" width="442" height="868" fill="none" stroke="${textInk}" stroke-opacity=".22" stroke-width="2"/>`;
+  out += `<text x="237" y="66" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="3.5" fill="${textInk}">ADVENT OF SYSTEM DESIGN</text>`;
+  out += `<line x1="150" y1="84" x2="324" y2="84" stroke="${textInk}" stroke-width="1.5"/>`;
   let y = 120 + fs * 0.82;
   for (const l of lines) {
-    out += `<text x="237" y="${y}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="${fs}" letter-spacing="-1" fill="${bg}"${fit(l, fs, 0.64, 420)}>${esc(l)}</text>`;
+    out += `<text x="237" y="${y}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="${fs}" letter-spacing="-1" fill="${titleInk}"${fit(l, fs, 0.64, 420)}>${esc(l)}</text>`;
     y += fs * 0.94;
   }
   const en = c.en.toUpperCase();
-  out += `<text x="237" y="${y + 10}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}"${fit(en, 13, 0.78, 400)}>${esc(en)}</text>`;
+  out += `<text x="237" y="${y + 10}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}"${fit(en, 13, 0.78, 400)}>${esc(en)}</text>`;
 
   if (!cell) {
     const cy = 612, r = 148;
@@ -89,10 +91,13 @@ function coverArt(c, i, sealed) {
     }
     out += `<text x="237" y="${cy - 8}" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="168" letter-spacing="-4" fill="${CREAM}">${pad(i + 1)}</text>`;
   }
-  out += `<line x1="34" y1="790" x2="440" y2="790" stroke="${bg}" stroke-width="2"/>`;
-  out += `<text x="34" y="846" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">JOUR ${pad(i + 1)} · ${esc(label.toUpperCase())}</text>`;
-  out += `<rect x="372" y="818" width="70" height="38" fill="none" stroke="${INK}" stroke-width="2"/>`;
-  out += `<text x="407" y="846" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="24" fill="${INK}">VHS</text>`;
+  out += `<line x1="34" y1="790" x2="440" y2="790" stroke="${titleInk}" stroke-width="2"/>`;
+  out += `<text x="34" y="846" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}">JOUR ${pad(i + 1)} · ${esc(label.toUpperCase())}</text>`;
+  // Le badge VHS n'est dessiné que sans illustration : sur la planche, il est déjà imprimé.
+  if (!cell) {
+    out += `<rect x="372" y="818" width="70" height="38" fill="none" stroke="${INK}" stroke-width="2"/>`;
+    out += `<text x="407" y="846" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="24" fill="${INK}">VHS</text>`;
+  }
   if (sealed) {
     out += `<g transform="rotate(-12 360 470)">`
       + `<circle cx="360" cy="470" r="64" fill="${INK}"/>`
@@ -105,7 +110,7 @@ function coverArt(c, i, sealed) {
 }
 
 function spineArt(c, i, sealed) {
-  const { bg, fg } = spineColors[i] || CATEGORIES[c.cat];
+  const { bg, fg } = palettes[i]?.spine || CATEGORIES[c.cat];
   let out = `<rect width="142" height="840" fill="${bg}"/>`;
   out += `<rect x="7" y="7" width="128" height="826" fill="none" stroke="${fg}" stroke-opacity=".35" stroke-width="1.5"/>`;
   out += `<circle cx="71" cy="80" r="46" fill="${fg}"/>`;
@@ -122,14 +127,14 @@ function spineArt(c, i, sealed) {
   return out;
 }
 
-/* Couleurs des tranches, tirées de leur jaquette */
+/* Couleurs tirées des jaquettes */
 const lum = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 const hex = (rgb) => '#' + rgb.map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
+const fallbackOn = (bg) => (lum(bg) > 0.5 ? [20, 20, 20] : [239, 230, 210]);
 
-// Fond = couleur la plus présente dans la case ; texte = la couleur suivante la plus présente qui
-// contraste assez avec ce fond (sinon encre ou crème). Les couleurs sont regroupées par paliers de
-// 16 niveaux par canal pour que les dégradés et la trame ne dispersent pas les votes.
-function cellPalette(ctx, [x, y, w, h], img) {
+// Couleurs d'une région de la planche, de la plus présente à la moins présente. Elles sont regroupées
+// par paliers de 16 niveaux par canal pour que les dégradés et la trame ne dispersent pas les votes.
+function regionColors(ctx, img, [x, y, w, h]) {
   const cw = 48, ch = 92;
   ctx.clearRect(0, 0, cw, ch);
   ctx.drawImage(img, x, y, w, h, 0, 0, cw, ch);
@@ -145,15 +150,34 @@ function cellPalette(ctx, [x, y, w, h], img) {
     buckets.set(key, b);
     total++;
   }
-  if (!total) return null;
-  const ranked = [...buckets.values()].sort((a, b) => b.n - a.n).map((b) => ({ n: b.n, rgb: b.rgb.map((v) => v / b.n) }));
-  const bg = ranked[0].rgb;
-  const accent = ranked.find((b) => b.n > total * 0.02 && Math.abs(lum(b.rgb) - lum(bg)) > 0.45);
-  const fg = accent ? accent.rgb : (lum(bg) > 0.5 ? [20, 20, 20] : [239, 230, 210]);
-  return { bg: hex(bg), fg: hex(fg) };
+  const list = [...buckets.values()].sort((a, b) => b.n - a.n).map((b) => ({ n: b.n, rgb: b.rgb.map((v) => v / b.n) }));
+  return { total, list };
 }
 
-let spineColors = [];
+// Couleur la plus présente qui se détache du fond de la région : dans la zone du titre, c'est l'encre
+// du titre imprimé.
+function inkOf({ total, list }, minContrast) {
+  if (!total) return null;
+  const bg = list[0].rgb;
+  const ink = list.find((b) => b.n > total * 0.02 && Math.abs(lum(b.rgb) - lum(bg)) > minContrast);
+  return ink ? ink.rgb : fallbackOn(bg);
+}
+
+// Tranche : fond = couleur dominante de la case, texte = encre qui contraste avec lui.
+// Jaquette : titre = encre de la zone du titre de l'image, petits textes = encre de la ligne du haut
+// (« A LEON VASARI FILM » sur la planche actuelle).
+function cellPalette(ctx, img, cell) {
+  const [x, y, w, h] = cell;
+  const all = regionColors(ctx, img, cell);
+  if (!all.total) return null;
+  const bg = all.list[0].rgb;
+  const fg = inkOf(all, 0.45);
+  const title = inkOf(regionColors(ctx, img, [x, y + h * 0.1, w, h * 0.25]), 0.3) || fg;
+  const text = inkOf(regionColors(ctx, img, [x, y + h * 0.02, w, h * 0.07]), 0.3) || fg;
+  return { spine: { bg: hex(bg), fg: hex(fg) }, cover: { title: hex(title), text: hex(text) } };
+}
+
+let palettes = [];
 // Préchargée dès le départ pour que la première cassette ouverte ne montre jamais une jaquette vide.
 const sheetImg = new Image();
 sheetImg.src = SHEET.url;
@@ -163,7 +187,7 @@ sheetImg.decode().then(() => {
   canvas.height = 92;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   try {
-    spineColors = CONCEPTS.map((c, i) => { const cell = cellOf(c, i); return cell && cellPalette(ctx, cell, sheetImg); });
+    palettes = CONCEPTS.map((c, i) => { const cell = cellOf(c, i); return cell && cellPalette(ctx, sheetImg, cell); });
   } catch {
     // Ouvert en file:// : le canvas est « tainted », on garde les couleurs des thèmes.
     return;
@@ -171,6 +195,7 @@ sheetImg.decode().then(() => {
   for (const t of tapes) {
     const i = t.v % N;
     t.sp.innerHTML = spineHTML(t.v);
+    t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)));
   }
 }).catch(() => {});
 
