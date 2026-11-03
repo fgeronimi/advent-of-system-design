@@ -494,11 +494,20 @@ a { color: var(--ink); text-decoration: none; }
 .figure .k-hot rect { stroke: var(--vermilion); fill: rgba(200, 65, 43, .08); }
 .figure .k-hot text, .figure .k-hot-t { fill: var(--vermilion); }
 .figure .k-reqs circle { fill: var(--ink); stroke: none; }
+.figure .k-line { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.figure .k-dash { stroke-dasharray: 4 4; }
 .figure .k-arrow, .figure .k-arrow path { fill: none; stroke: var(--ink); stroke-width: 1.2; marker-end: url(#arrowhead); }
 .figure .k-old-s { stroke: var(--muted); }
 .figure .k-new-s, .figure .k-new-s path { stroke: var(--cobalt); }
 .figure .k-hot-s path { stroke: var(--vermilion); }
 .figure .k-ink-s path { stroke: var(--ink); }
+.figure .k-hot-s { stroke: var(--vermilion); }
+.figure .k-bar, .figure .k-dot { fill: var(--ink); stroke: none; }
+.figure .k-new-f { fill: var(--cobalt); }
+.figure .k-hot-f { fill: var(--vermilion); }
+.figure .k-old-f { fill: var(--muted); }
+.figure .k-left { text-anchor: start; }
+.figure .k-mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 500; font-size: 11.5px; }
 
 .poster-col {
   position: sticky;

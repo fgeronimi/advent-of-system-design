@@ -22,6 +22,6 @@ Pas de build, pas de dépendance. Servir le dossier avec n'importe quel serveur 
 
 - Aucun fade d'opacité : tous les reveals sont des masques, des clips ou des scales. Garder cette règle.
 - Un concept sans `body` affiche une fiche « bientôt » avec le pitch seul.
-- Textes : seuls `` `code` `` et `**gras**` sont interprétés (`fmt` dans `app.js`), le reste est échappé.
+- Textes : seuls `` `code` ``, `**gras**` et `*italique*` sont interprétés (`fmt` dans `app.js`), le reste est échappé.
 - Les schémas utilisent les classes `.k-*` de `styles.css` pour les couleurs, pas de couleurs en dur.
 - Illustrations : une planche unique de 24 cases, voir `PROMPTS.md`.

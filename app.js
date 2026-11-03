@@ -20,7 +20,7 @@ const smooth = (x) => x * x * (3 - 2 * x);
 const relative = (v, s) => mod(v - s + LOOP / 2, LOOP) - LOOP / 2;
 const pad = (n) => String(n).padStart(2, '0');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const fmt = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+const fmt = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
 /* Calendrier */
 // ?day=N simule le N décembre, pour tester sans attendre.
