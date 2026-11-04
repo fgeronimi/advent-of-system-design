@@ -46,6 +46,7 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Remplacer un vieux système morceau par morceau, en l’enveloppant jusqu’à pouvoir le couper.',
     art: 'un figuier étrangleur dont les racines enlacent un ordinateur beige des années 80',
+    why: 'Sur la jaquette, un figuier étrangleur a poussé sur un vieil ordinateur à bandes. Il enlace son hôte, prend racine à côté, et finit par tenir debout seul quand la machine s’effrite : exactement ce que fait le nouveau système autour du legacy.',
     body: {
       problem: [
         'Ton monolithe a quinze ans, personne n’ose toucher au module de facturation, et chaque release prend une semaine de recette. La tentation : tout réécrire from scratch.',
@@ -92,6 +93,7 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Rejouer une requête dix fois doit avoir le même effet que l’exécuter une seule fois.',
     art: 'un tampon encreur qui frappe dix fois la même case d’un formulaire, une seule marque visible',
+    why: 'Sur la jaquette, un tampon frappe encore et encore la même case, mais il ne reste qu’une seule marque. Rejouer l’opération ne change rien au résultat : c’est toute la définition.',
     body: {
       problem: [
         'Ton utilisateur valide un paiement depuis son téléphone, dans le métro. Le serveur reçoit la requête, débite la carte… et la connexion coupe avant que la réponse n’arrive. L’app ne sait pas si ça a marché, alors elle retente. Résultat : deux débits.',
@@ -137,6 +139,7 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Ton architecture finit toujours par ressembler à ton organigramme.',
     art: 'un organigramme dont les cases se transforment en serveurs reliés par des câbles',
+    why: 'Sur la jaquette, le soleil se reflète dans la rivière, trait pour trait. Un système fait pareil avec l’organisation qui le construit : il en renvoie l’image fidèle, frontières et silences compris.',
     body: {
       problem: [
         'Tu as une équipe front, une équipe back et une équipe base de données. Chaque nouvelle feature traverse les trois backlogs, trois priorités, trois plannings. Et ton architecture ? Trois couches bien séparées, avec des contrats lourds entre elles.',
@@ -182,6 +185,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Séparer le modèle qui écrit du modèle qui lit, et laisser chacun être bon dans son rôle.',
     art: 'une route qui se sépare en deux voies, l’une pour des camions qui livrent, l’autre pour des lecteurs de journaux',
+    why: 'Sur la jaquette, un cargo spatial a deux flancs : d’un côté des navettes déchargent le fret, de l’autre des passagers regardent tranquillement les étoiles. Un seul vaisseau, deux usages qui ne se gênent pas, l’écriture d’un côté et la lecture de l’autre.',
     body: {
       problem: [
         'Le même modèle sert à écrire (règles métier, invariants, transactions) et à lire (écrans, recherches, tableaux de bord qui agrègent cinq tables). Il devient un compromis qui ne satisfait personne : jointures lentes en lecture, entités tordues pour coller aux écrans en écriture.',
@@ -227,6 +231,7 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Arrêter d’appeler un service qui tombe, pour qu’il ne t’entraîne pas dans sa chute.',
     art: 'un disjoncteur électrique géant, levier abaissé, petites étincelles autour',
+    why: 'Sur la jaquette, une flamme seule dans le noir. Quand un service tombe et que tout le monde continue de l’appeler, l’incendie se propage de proche en proche : le disjoncteur coupe avant que tout brûle.',
     body: {
       problem: [
         'Le service de paiement ne tombe pas : il devient lent, avec des réponses à trente secondes. Tous tes threads restent bloqués à l’attendre, ton pool de connexions sature, et c’est maintenant **ton** service qui ne répond plus. Puis celui qui t’appelle. C’est une panne en cascade.',
@@ -272,6 +277,7 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Écrire en base et publier un événement sans jamais perdre l’un ou l’autre.',
     art: 'une boîte aux lettres posée sur une armoire à dossiers, des enveloppes qui s’en échappent',
+    why: 'Sur la jaquette, un naufragé écrit son journal et glisse chaque fois une copie dans une bouteille. Les bouteilles attendent sur le sable que la marée les emporte : le journal et le message sont écrits ensemble, l’envoi vient après, sans rien perdre.',
     body: {
       problem: [
         'Ton service crée une commande en base, puis publie `OrderCreated` sur Kafka pour que la facturation et la logistique suivent. Si le process crashe entre les deux, la commande existe mais personne n’est prévenu. Si tu publies d’abord, l’événement peut partir pour une commande jamais enregistrée.',
@@ -317,6 +323,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Une requête pour la liste, puis une par élément : la page qui rame sans raison apparente.',
     art: 'un serveur de restaurant épuisé qui fait cent allers-retours pour apporter cent couverts',
+    why: 'Sur la jaquette, un ascenseur monte une seule enveloppe à la fois pendant que la file attend en bas. Un aller-retour par élément au lieu d’un seul voyage chargé : c’est le N+1.',
     body: {
       problem: [
         'Ta page liste 50 articles avec le nom de leur auteur. L’ORM fait une requête pour les articles, puis, à chaque fois que le template affiche `article.author.name`, une requête de plus pour charger l’auteur. Total : 51 requêtes.',
@@ -362,6 +369,7 @@ const CONCEPTS = [
     cat: 'securite',
     pitch: 'Effacer une donnée partout, même dans les backups, en détruisant seulement sa clé.',
     art: 'une clé ancienne passée dans un broyeur à papier, des confettis de lettres chiffrées',
+    why: 'Sur la jaquette, une silhouette jette une clé au feu au milieu d’une salle remplie de coffres. On ne vide aucun coffre : sans la clé, ils resteront scellés pour toujours, sauvegardes comprises.',
     body: {
       problem: [
         'Un utilisateur exerce son droit à l’effacement (RGPD, article 17). Facile dans la table `users`. Mais ses données sont aussi dans les réplicas, dans trente jours de backups, dans les logs, dans le data lake, dans un topic Kafka et dans un event store **qui n’autorise que l’ajout**.',
@@ -407,6 +415,7 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Changer un schéma ou une API sans casser personne : élargir, migrer, puis resserrer.',
     art: 'un accordéon à moitié déplié posé sur une pile de tables de base de données',
+    why: 'Sur la jaquette, des rails neufs courent à côté des anciens, la locomotive passe l’aiguillage et des ouvriers démontent la vieille voie derrière elle. Les trois temps du pattern : les deux voies coexistent, on bascule, puis on retire l’ancienne.',
     body: {
       problem: [
         'Tu veux renommer la colonne `name` en `full_name`. Tu écris la migration, tu déploies. Pendant le rolling deploy, la moitié des pods tourne encore avec l’ancien code, qui cherche `name`… et plante.',
@@ -452,6 +461,7 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Dire non poliment avant que le trafic ne te dise non brutalement.',
     art: 'un seau percé qui laisse tomber des jetons un par un dans un entonnoir',
+    why: 'Sur la jaquette, un seau déverse ses jetons dans un entonnoir qui ne les laisse passer qu’au compte-gouttes. Peu importe la vitesse à laquelle on verse, le débit en sortie reste le même.',
     body: {
       problem: [
         'Un client buggé tourne en boucle sur ton API à 5 000 requêtes par seconde. Ou un scraper. Ou une attaque par credential stuffing sur `/login`. Sans limite, un seul appelant consomme les ressources de tous les autres.',
@@ -497,6 +507,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Découper une base trop grosse en morceaux qui vivent sur des machines différentes.',
     art: 'un grand vase de porcelaine brisé en fragments, chaque fragment posé sur un serveur',
+    why: 'Sur la jaquette, une station de combat s’est séparée en segments qui volent chacun de leur côté. Une seule base devenue plusieurs morceaux autonomes, chacun avec sa part de l’ensemble.',
     body: {
       problem: [
         'Ta base fait 4 To et encaisse 50 000 écritures par seconde. Le plus gros serveur du catalogue ne suffit plus. Les réplicas en lecture aident pour les lectures, mais toutes les écritures passent toujours par un seul primaire.',
@@ -541,6 +552,7 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Ajouter des gens à un projet en retard le met encore plus en retard.',
     art: 'une foule de maçons qui se marchent dessus autour d’un seul petit mur de briques',
+    why: 'Sur la jaquette, une foule de maçons se marche dessus autour d’un petit mur qui n’avance pas. Ajouter des bras à un chantier en retard, c’est surtout ajouter des gens à coordonner.',
     body: {
       problem: [
         'Le projet a deux mois de retard. La direction ajoute quatre développeurs pour rattraper. Trois mois plus tard, le retard s’est creusé.',
@@ -584,6 +596,7 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Une transaction répartie sur plusieurs services, avec un plan de repli à chaque étape.',
     art: 'une rangée de dominos qui tombent, dont les derniers se relèvent dans l’autre sens',
+    why: 'Sur la jaquette, une cordée redescend prudemment vers le camp précédent après la glissade du premier. Pas de retour magique en arrière : chacun défait son étape, dans l’ordre inverse, comme les compensations d’une saga.',
     body: {
       problem: [
         'Passer une commande, c’est réserver le stock (service Stock), débiter le client (service Paiement) et planifier la livraison (service Livraison). Trois services, trois bases. Pas de transaction ACID possible entre les trois, et une transaction distribuée (2PC) serait lente, bloquante et mal supportée.',
@@ -629,6 +642,7 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Une clé chaude expire, et mille requêtes foncent en même temps sur la base.',
     art: 'un troupeau de bisons qui charge vers un petit coffre-fort ouvert',
+    why: 'Sur la jaquette, une vallée où mène un seul chemin, comme pendant une ruée vers l’or. Le jour où le cache expire, toutes les requêtes se précipitent au même endroit en même temps, et c’est la base qui encaisse la cavalcade.',
     body: {
       problem: [
         'Ta page d’accueil est servie depuis un cache Redis avec un TTL de cinq minutes. Ça tient très bien la charge… jusqu’à la seconde où la clé expire en plein pic.',
@@ -673,6 +687,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Répartir des clés sur des serveurs sans tout redistribuer quand on en ajoute un.',
     art: 'un grand cadran d’horloge circulaire sur lequel sont posés de petits serveurs',
+    why: 'Sur la jaquette, des satellites sont répartis sur une orbite et chaque signal monte vers le prochain dans le sens de rotation. Quand un nouveau satellite s’insère, il ne récupère que les signaux de son voisin : l’anneau de hachage, vu de l’espace.',
     body: {
       problem: [
         'Tu répartis tes clés de cache sur 4 serveurs avec `serveur = hash(clé) % 4`. Simple et équilibré. Puis tu ajoutes un cinquième serveur : `hash(clé) % 5` envoie maintenant environ **80 % des clés** sur un autre serveur que la veille.',
@@ -718,6 +733,7 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Envoyer la nouvelle version à 1 % du trafic, et regarder si le canari chante encore.',
     art: 'un canari dans une petite cage suspendue à l’entrée d’une mine, une lampe de mineur à côté',
+    why: 'Sur la jaquette, des oiseaux s’envolent au-dessus d’une forêt sombre. Clin d’œil au canari des mineurs, qui sentait le danger avant les hommes : une petite partie du trafic part en éclaireur avant tout le monde.',
     body: {
       problem: [
         'Tu déploies la nouvelle version à 100 % d’un coup. Elle a une fuite mémoire, ou une régression de latence, ou un bug métier sur un cas que la préprod n’a jamais vu. Tous tes utilisateurs le découvrent en même temps que toi.',
@@ -763,6 +779,7 @@ const CONCEPTS = [
     cat: 'securite',
     pitch: 'Accepter des fichiers d’inconnus sans laisser entrer le loup : quarantaine, antivirus, désarmement.',
     art: 'un colis posé dans une cage de verre, traversé par un faisceau de scanner',
+    why: 'Sur la jaquette, un colis attend dans une cage de verre, traversé par le faisceau d’un scanner. Rien ne touche le système avant d’avoir été isolé, analysé et nettoyé : c’est la quarantaine.',
     body: {
       problem: [
         'Ton app accepte des CV, des factures, des avatars. Des fichiers envoyés par des inconnus. Parmi eux : des malwares, des PDF qui embarquent du JavaScript, des documents Office avec macros, des **polyglottes** (une image valide qui est aussi un fichier HTML), des zip bombs, des noms de fichiers piégés (`../../etc/passwd`).',
@@ -809,6 +826,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Ne plus stocker l’état, mais la suite d’événements qui y a mené.',
     art: 'un long ruban de bande magnétique qui se déroule, chaque segment marqué d’un symbole',
+    why: 'Sur la jaquette, une machine à écrire tape seule un rouleau sans fin qui remplit la pièce. Rien ne s’efface, tout s’ajoute à la suite, et c’est en relisant le rouleau qu’on sait où on en est.',
     body: {
       problem: [
         'Ta table `accounts` dit que le solde vaut 120. Pourquoi 120 ? Qui l’a changé, quand, et depuis quelle valeur ? Le modèle CRUD écrase l’état à chaque mise à jour : l’historique est perdu, et la table d’audit ajoutée à côté finit toujours par diverger.',
@@ -855,6 +873,7 @@ const CONCEPTS = [
     cat: 'distribue',
     pitch: 'Suivre une requête de service en service pour savoir où passent les millisecondes.',
     art: 'une loupe qui suit un fil rouge tendu entre plusieurs serveurs',
+    why: 'Sur la jaquette, un enquêteur suit un fil rouge punaisé de machine en machine. Un seul fil traverse tout le tableau : c’est l’identifiant de trace qui accompagne la requête d’un service à l’autre.',
     body: {
       problem: [
         'L’endpoint `/checkout` met 3 secondes au p99. La requête traverse la gateway, six services, deux files de messages et trois bases. Chaque service a ses logs, bien rangés… et rien ne permet de retrouver, dans chacun, les lignes qui concernent **cette** requête.',
@@ -900,6 +919,7 @@ const CONCEPTS = [
     cat: 'resilience',
     pitch: 'Quand le consommateur sature, il doit pouvoir dire au producteur de ralentir.',
     art: 'un tuyau d’arrosage avec un nœud, la pression qui le fait gonfler en amont',
+    why: 'Sur la jaquette, l’ouvrier submergé en bas de la chaîne sonne la cloche, et celui qui alimente le tapis s’arrête. Le signal remonte vers la source au lieu de laisser les cartons s’empiler.',
     body: {
       problem: [
         'Ton producteur envoie 10 000 messages par seconde, ton consommateur en traite 2 000. La différence s’accumule quelque part : dans un buffer en mémoire, dans une file, dans un pool de threads.',
@@ -940,11 +960,12 @@ const CONCEPTS = [
   },
   {
     slug: 'geo',
-    title: 'Géo Trouve Tout',
-    en: 'Geospatial Indexing · Geohash, Quadtree',
+    title: 'Index Géospatial',
+    en: 'Geohash · Quadtree',
     cat: 'donnees',
     pitch: 'Trouver les dix livreurs les plus proches parmi un million, sans calculer un million de distances.',
     art: 'une carte découpée en carrés imbriqués de plus en plus petits, une épingle au centre',
+    why: 'Sur la jaquette, un phare balaie la côte. Son rôle est de guider chacun vers le bon endroit, au plus près : c’est exactement ce qu’on demande à un index géospatial.',
     body: {
       problem: [
         'Une app de livraison doit trouver les dix livreurs les plus proches d’un restaurant. Il y a un million de livreurs, et chacun envoie sa position toutes les cinq secondes.',
@@ -990,6 +1011,7 @@ const CONCEPTS = [
     cat: 'equipe',
     pitch: 'Quatre chiffres pour savoir si ton équipe livre vite et bien, ou juste vite.',
     art: 'le tableau de bord d’une voiture ancienne avec quatre cadrans à aiguille',
+    why: 'Sur la jaquette, quatre mécaniciens changent les quatre roues sous un chronomètre. Livrer vite et réparer vite sans tout casser : les quatre métriques DORA mesurent exactement ça.',
     body: {
       problem: [
         'Comment savoir si une équipe livre bien ? La vélocité en points, le nombre de tickets fermés, les lignes de code : faciles à mesurer, faciles à manipuler, et elles ne disent rien de la stabilité ni de la valeur livrée.',
@@ -1034,6 +1056,7 @@ const CONCEPTS = [
     cat: 'migration',
     pitch: 'Des frontières de microservices, sans le réseau entre elles.',
     art: 'un grand bloc de pierre taillé en compartiments, comme une boîte à outils',
+    why: 'Sur la jaquette, cinq véhicules s’assemblent en un seul robot géant, jointures bien visibles. Un seul corps à déployer, des modules aux frontières nettes, et chacun peut repartir seul le jour où on en a besoin.',
     body: {
       problem: [
         'Ton monolithe est devenu une « grosse boule de boue » : tout dépend de tout, chaque modification casse quelque chose ailleurs. Le réflexe : passer aux microservices.',
@@ -1079,6 +1102,7 @@ const CONCEPTS = [
     cat: 'donnees',
     pitch: 'Quand le réseau se coupe, il faut choisir : répondre faux, ou ne pas répondre.',
     art: 'un triangle dont les trois sommets portent une balance, une lampe allumée et une prise débranchée',
+    why: 'Sur la jaquette, le pont entre les deux tours est coupé. L’horloge de gauche s’est arrêtée plutôt que de donner une heure fausse, celle de droite continue mais n’affiche plus la même : pendant une partition, il faut choisir entre cohérence et disponibilité.',
     body: {
       problem: [
         'Ta base est répliquée entre Paris et Francfort. Le lien entre les deux datacenters coupe. Un client écrit `x = 2` à Paris ; une seconde plus tard, un autre lit `x` à Francfort, qui n’a pas reçu la mise à jour.',

@@ -91,7 +91,6 @@ function coverArt(c, i, sealed) {
     }
     out += `<text x="237" y="${cy - 8}" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="168" letter-spacing="-4" fill="${CREAM}">${pad(i + 1)}</text>`;
   }
-  out += `<line x1="34" y1="790" x2="440" y2="790" stroke="${titleInk}" stroke-width="2"/>`;
   out += `<text x="34" y="846" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}">JOUR ${pad(i + 1)} · ${esc(label.toUpperCase())}</text>`;
   // Le badge VHS n'est dessiné que sans illustration : sur la planche, il est déjà imprimé.
   if (!cell) {
@@ -518,6 +517,9 @@ function openDetail() {
   $('.d-pitch').textContent = c.pitch;
   bodyEl.innerHTML = renderBody(c);
   $('.d-credit').textContent = readingTime(c);
+  // Pas d'explication tant que la case montre encore une image de film.
+  $('.d-why').textContent = c.why || '';
+  $('.d-why-line').style.display = c.why ? '' : 'none';
   $('.d-read').style.display = c.body ? '' : 'none';
   pArt.innerHTML = coverArt(c, i, false);
   circles.forEach((el) => el.setAttribute('r', 0));

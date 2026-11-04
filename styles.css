@@ -397,6 +397,7 @@ a { color: var(--ink); text-decoration: none; }
   line-height: 1.4;
   color: var(--muted);
 }
+.d-why { max-width: 46ch; }
 .d-actions { display: flex !important; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .pill {
   display: inline-flex;
