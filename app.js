@@ -70,17 +70,21 @@ function coverArt(c, i, sealed) {
   let out = `<rect width="474" height="900" fill="${CREAM}"/>`;
   if (cell) out += sheetCrop(cell, 0, 0, 474, 900);
   const lines = wrapTitle(c.title.toUpperCase(), 10);
-  const fs = lines.length <= 2 ? 78 : lines.length === 3 ? 64 : 54;
+  // Les capitales de Newsreader font ~0,74 em de large. Au-delà de TITLE_W, le titre mordait sur
+  // le bord usé de l'illustration : on réduit le corps, en tolérant 15 % de condensation.
+  const TITLE_W = 370;
+  const widest = Math.max(...lines.map((l) => l.length));
+  const fs = Math.min(lines.length <= 2 ? 78 : lines.length === 3 ? 64 : 54, Math.floor((TITLE_W * 1.15) / (widest * 0.74)));
   out += `<rect x="16" y="16" width="442" height="868" fill="none" stroke="${textInk}" stroke-opacity=".22" stroke-width="2"/>`;
   out += `<text x="237" y="66" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="3.5" fill="${textInk}">ADVENT OF SYSTEM DESIGN</text>`;
   out += `<line x1="150" y1="84" x2="324" y2="84" stroke="${textInk}" stroke-width="1.5"/>`;
   let y = 120 + fs * 0.82;
   for (const l of lines) {
-    out += `<text x="237" y="${y}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="${fs}" letter-spacing="-1" fill="${titleInk}"${fit(l, fs, 0.64, 420)}>${esc(l)}</text>`;
+    out += `<text x="237" y="${y}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="${fs}" letter-spacing="-1" fill="${titleInk}"${fit(l, fs, 0.74, TITLE_W)}>${esc(l)}</text>`;
     y += fs * 0.94;
   }
   const en = c.en.toUpperCase();
-  out += `<text x="237" y="${y + 10}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}"${fit(en, 13, 0.78, 400)}>${esc(en)}</text>`;
+  out += `<text x="237" y="${y + 10}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}"${fit(en, 13, 0.78, TITLE_W)}>${esc(en)}</text>`;
 
   if (!cell) {
     const cy = 612, r = 148;
