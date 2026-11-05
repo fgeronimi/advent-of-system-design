@@ -186,7 +186,7 @@ let palettes = [];
 // Préchargée dès le départ pour que la première cassette ouverte ne montre jamais une jaquette vide.
 const sheetImg = new Image();
 sheetImg.src = SHEET.url;
-sheetImg.decode().then(() => {
+const sheetReady = sheetImg.decode().then(() => {
   const canvas = document.createElement('canvas');
   canvas.width = 48;
   canvas.height = 92;
@@ -195,14 +195,10 @@ sheetImg.decode().then(() => {
     palettes = CONCEPTS.map((c, i) => { const cell = cellOf(c, i); return cell && cellPalette(ctx, sheetImg, cell); });
   } catch {
     // Ouvert en file:// : le canvas est « tainted », on garde les couleurs des thèmes.
-    return;
+    return false;
   }
-  for (const t of tapes) {
-    const i = t.v % N;
-    t.sp.innerHTML = spineHTML(t.v);
-    t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)));
-  }
-}).catch(() => {});
+  return true;
+}).catch(() => false);
 
 const svg = (w, h, inner) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
 
@@ -254,15 +250,12 @@ const shelf = $('.shelf');
 const tapes = [];
 for (let v = 0; v < LOOP; v++) {
   const i = v % N;
-  const c = CONCEPTS[i];
   const el = document.createElement('div');
   el.className = 'tape' + (isLocked(i) ? ' locked' : '');
   const sp = document.createElement('div');
   sp.className = 'sp';
-  sp.innerHTML = spineHTML(v);
   const cv = document.createElement('div');
   cv.className = 'cv';
-  cv.innerHTML = svg(474, 900, coverArt(c, i, isLocked(i)));
   el.append(sp, cv);
   stage.append(el);
   const t = { v, el, sp, cv, lift: 0, visible: true };
@@ -667,4 +660,34 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 document.fonts.ready.then(placeIndicator);
+
+/* Chargement */
+function paint(t) {
+  const i = t.v % N;
+  t.sp.innerHTML = spineHTML(t.v);
+  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)));
+}
+
+// Les cassettes ne sont dessinées qu'une fois les couleurs de la planche connues : sinon on voyait
+// d'abord les couleurs des thèmes, puis le basculement.
+let revealed = false;
+function reveal() {
+  if (revealed) return;
+  revealed = true;
+  tapes.forEach(paint);
+  document.documentElement.classList.remove('is-loading');
+  if (reduce) return;
+  // `composite: 'add'` empile la montée sur le transform que la boucle écrit à chaque frame.
+  for (const t of tapes) {
+    const r = Math.abs(relative(t.v, s));
+    if (r > 12) continue;
+    t.el.animate([{ transform: `translateY(${innerHeight}px)` }, { transform: 'translateY(0)' }],
+      { duration: 900, delay: r * 45, easing: EASE, fill: 'backwards', composite: 'add' });
+  }
+  for (const m of [capTitle, capSub, capDay]) m.replaceChildren();
+  setTimeout(() => setActive(active, 1, false), 450);
+}
+// Réseau lent ou planche absente : on montre quand même l'étagère, avec les couleurs des thèmes.
+Promise.race([Promise.all([sheetReady, document.fonts.ready]), new Promise((r) => setTimeout(r, 4000))]).then(reveal);
+sheetReady.then((ok) => { if (ok && revealed) tapes.forEach(paint); });
 })();
