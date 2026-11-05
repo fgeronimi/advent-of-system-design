@@ -4,6 +4,10 @@ Un calendrier de l’avent pour réviser le system design : 24 concepts, une cas
 du 1er au 24 décembre. Chaque cassette s’ouvre sur une fiche : le problème, le principe, un schéma,
 les compromis, des exemples réels et les questions qu’on te posera en entretien.
 
+**En ligne : [fgeronimi.github.io/advent-of-system-design](https://fgeronimi.github.io/advent-of-system-design/)**
+
+Pas envie d’attendre décembre ? [Toutes les fiches en avance](https://fgeronimi.github.io/advent-of-system-design/?day=24).
+
 ## Lancer
 
 Aucune dépendance, aucun build. Ouvre `index.html` ou sers le dossier avec n’importe quel serveur statique :
