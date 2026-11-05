@@ -434,7 +434,12 @@ addEventListener('keydown', (e) => {
   if (isOpen) return;
   if (e.key === 'ArrowLeft') goBy(-1);
   else if (e.key === 'ArrowRight') goBy(1);
-  else if (e.key === 'Enter' && (document.activeElement === document.body || !document.activeElement)) tryOpen();
+  else if (e.key === 'Enter' && (document.activeElement === document.body || !document.activeElement)) {
+    // openDetail donne le focus à « Fermer » : sans preventDefault, le clic clavier que le navigateur
+    // déclenche juste après sur l'élément focus referme aussitôt la fiche.
+    e.preventDefault();
+    tryOpen();
+  }
 });
 
 /* Page d'explication */
