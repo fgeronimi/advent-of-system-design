@@ -115,7 +115,9 @@ function spineArt(c, i, sealed) {
   out += `<circle cx="71" cy="80" r="46" fill="${fg}"/>`;
   out += `<text x="71" y="82" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="50" letter-spacing="-1" fill="${bg}">${pad(i + 1)}</text>`;
   const t = c.title.toUpperCase();
-  out += `<text transform="translate(71 162) rotate(90)" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="60" letter-spacing="-.5" fill="${fg}"${fit(t, 60, 0.62, 530)}>${esc(t)}</text>`;
+  // dominant-baseline="central" centre la boîte em, pas les capitales : le titre penchait à droite.
+  // On pose la ligne de base à une demi-hauteur de capitale (0,7 em pour Newsreader) de l'axe.
+  out += `<text transform="translate(${71 - 60 * 0.35} 162) rotate(90)" font-family="${SERIF}" font-weight="600" font-size="60" letter-spacing="-.5" fill="${fg}"${fit(t, 60, 0.62, 530)}>${esc(t)}</text>`;
   out += `<text x="71" y="738" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2.5" fill="${fg}">JOUR ${pad(i + 1)}</text>`;
   out += `<rect x="26" y="758" width="90" height="40" fill="none" stroke="${fg}" stroke-width="2"/>`;
   out += `<text x="71" y="787" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="26" fill="${fg}">VHS</text>`;
