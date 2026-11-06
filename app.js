@@ -236,11 +236,38 @@ const wearTexture = (() => {
 })();
 document.documentElement.style.setProperty('--wear', wearTexture);
 
+/* Neige posée */
+// Un bourrelet de neige sur le haut de chaque face, dessiné dans le SVG pour suivre la 3D sans calcul.
+// Les cassettes scellées sont bien enneigées, celles déjà ouvertes n'en gardent qu'un peu.
+// Pas de dégradé ni de filtre : ils exigeraient des id, dupliqués d'une copie de cassette à l'autre.
+function snowCap(w, i, salt) {
+  let seed = (i + 1) * 7919 + salt;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const depth = (isLocked(i) ? 26 : 10) * (w / 142) ** 0.35;
+  const steps = Math.max(8, Math.round(w / 18));
+  const ys = Array.from({ length: steps + 1 }, () => depth * (0.6 + rnd() * 0.45));
+  // Deux ou trois coulures plus longues, jamais collées aux bords.
+  const drips = 2 + Math.floor(rnd() * 2);
+  for (let k = 0; k < drips; k++) ys[1 + Math.floor(rnd() * (steps - 1))] += depth * (0.5 + rnd() * 0.7);
+  const dx = w / steps;
+  const edge = (dy) => {
+    let d = `M0 0H${w}V${ys[steps] + dy}`;
+    for (let k = steps; k > 0; k--) {
+      const x0 = k * dx, x1 = (k - 1) * dx;
+      d += `Q${x0 - dx / 2} ${Math.max(ys[k], ys[k - 1]) * 1.12 + dy} ${x1} ${ys[k - 1] + dy}`;
+    }
+    return d + 'Z';
+  };
+  return `<path d="${edge(3)}" fill="#000" opacity=".22"/>`
+    + `<path d="${edge(0)}" fill="#EEF2F5"/>`
+    + `<path d="${edge(-depth * 0.45)}" fill="#FFFFFF"/>`;
+}
+
 function spineHTML(v) {
   const i = v % N;
   const y = (v * 37) % 100;
   const flip = v % 3 === 1 ? ' scale(-1, 1)' : v % 3 === 2 ? ' scale(1, -1)' : '';
-  return svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)))
+  return svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)) + snowCap(142, i, 1))
     + `<div class="wear" style="background-position: 0 ${y}%;${flip ? ` transform:${flip}` : ''}"></div>`;
 }
 
@@ -296,7 +323,29 @@ function F(r) {
 
 /* En-tête */
 $('.top .month').textContent = `Décembre ${ADVENT_YEAR}`;
-$('.top .progress').textContent = `${pad(unlocked)} / ${N} ouvertes`;
+
+/* Guirlande */
+// Une ampoule par jour : la guirlande sert de compteur, chaque jour ouvert en allume une de plus.
+const BULB_COLORS = ['#E0473F', '#E0B25A', '#4FA36B', '#F1E9D8'];
+const BULB_SVG = '<svg viewBox="0 0 16 26" aria-hidden="true"><rect x="5" y="0" width="6" height="6" rx="1" fill="#4A5246"/>'
+  + '<path class="glass" d="M8 5C13 5 14 12 13 17C12 22 10 25 8 25C6 25 4 22 3 17C2 12 3 5 8 5Z"/></svg>';
+const garland = $('.garland');
+garland.setAttribute('aria-label', `${unlocked} jours ouverts sur ${N}`);
+// Le fil pend entre deux crochets et chaque ampoule est accrochée au creux d'une boucle.
+const wire = Array.from({ length: N }, (_, k) => `Q${k * 100 + 50} 36 ${(k + 1) * 100} 4`).join(' ');
+garland.innerHTML = `<svg class="wire" viewBox="0 0 ${N * 100} 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 4 ${wire}" vector-effect="non-scaling-stroke"/></svg>`;
+const bulbs = CONCEPTS.map((c, i) => {
+  const b = document.createElement('button');
+  b.className = 'bulb' + (i < unlocked ? ' lit' : '') + (i === unlocked - 1 ? ' today' : '');
+  b.style.left = `${(i + 0.5) / N * 100}%`;
+  b.style.setProperty('--c', BULB_COLORS[i % BULB_COLORS.length]);
+  b.style.setProperty('--r', `${(i % 2 ? 1 : -1) * (5 + (i * 7) % 5)}deg`);
+  b.setAttribute('aria-label', `Jour ${i + 1} : ${c.title}`);
+  b.innerHTML = BULB_SVG;
+  b.addEventListener('click', () => goBy(shortest(i)));
+  garland.append(b);
+  return b;
+});
 
 /* Légende */
 const capTitle = $('.cap-title'), capSub = $('.cap-sub'), capDay = $('.cap-day');
@@ -348,6 +397,7 @@ function setActive(i, dir, instant) {
   swapLine(capTitle, c.title, dir, instant);
   swapLine(capSub, c.en, dir, instant);
   swapLine(capDay, dayLine(i), dir, instant);
+  bulbs.forEach((b, k) => b.classList.toggle('current', k === i));
   placeIndicator();
 }
 
@@ -572,6 +622,50 @@ $('.close').addEventListener('click', () => closeDetail());
 $('.d-next').addEventListener('click', () => closeDetail(() => goBy(1)));
 $('.d-read').addEventListener('click', () => bodyEl.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }));
 
+/* Neige qui tombe */
+// Un seul canvas pour tous les flocons : en CSS, au-delà d'une dizaine d'éléments animés, ça ne tient plus.
+// Trois plans de profondeur, du petit flocon lent du fond au gros flocon rapide du premier plan.
+const snowCv = $('.snow');
+const snowCtx = snowCv.getContext('2d');
+const LAYERS = [
+  { r: [0.6, 1.2], vy: [18, 30], a: 0.35 },
+  { r: [1.2, 2], vy: [32, 52], a: 0.6 },
+  { r: [2, 3.2], vy: [58, 85], a: 0.85 },
+];
+let flakes = [];
+const between = ([a, b]) => a + Math.random() * (b - a);
+function resetSnow() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  snowCv.width = innerWidth * dpr;
+  snowCv.height = innerHeight * dpr;
+  snowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const count = Math.min(140, Math.round(innerWidth * innerHeight / 14000));
+  flakes = Array.from({ length: count }, (_, k) => {
+    const L = LAYERS[k % LAYERS.length];
+    return { x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: between(L.r), vy: between(L.vy), a: L.a, sway: 8 + Math.random() * 18, ph: Math.random() * 6.28 };
+  });
+}
+function drawSnow(dt, now) {
+  snowCtx.clearRect(0, 0, innerWidth, innerHeight);
+  // Sous la fiche, la neige ne se voit pas : inutile de la dessiner.
+  if (reduce || isOpen) return;
+  for (const f of flakes) {
+    f.y += f.vy * dt;
+    if (f.y > innerHeight + 6) { f.y = -6; f.x = Math.random() * innerWidth; }
+    const x = f.x + Math.sin(now / 1000 * 0.9 + f.ph) * f.sway;
+    snowCtx.globalAlpha = f.a;
+    snowCtx.beginPath();
+    snowCtx.arc(x, f.y, f.r, 0, 6.2832);
+    snowCtx.fillStyle = '#fff';
+    snowCtx.fill();
+  }
+  snowCtx.globalAlpha = 1;
+}
+if (!reduce) {
+  resetSnow();
+  addEventListener('resize', resetSnow);
+}
+
 /* Boucle */
 const play = $('.play');
 const cursor = $('.cur');
@@ -661,6 +755,7 @@ function frame(now) {
     cursorLabel.innerHTML = activeSealed ? `J-${daysLeft(act)}<br>SCELLÉ` : 'OUVRIR<br>▶';
   }
 
+  drawSnow(dt, now);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -670,7 +765,7 @@ document.fonts.ready.then(placeIndicator);
 function paint(t) {
   const i = t.v % N;
   t.sp.innerHTML = spineHTML(t.v);
-  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)));
+  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)) + snowCap(474, i, 2));
 }
 
 // Les cassettes ne sont dessinées qu'une fois les couleurs de la planche connues : sinon on voyait
@@ -693,6 +788,9 @@ function reveal() {
   setTimeout(() => setActive(active, 1, false), 450);
 }
 // Réseau lent ou planche absente : on montre quand même l'étagère, avec les couleurs des thèmes.
-Promise.race([Promise.all([sheetReady, document.fonts.ready]), new Promise((r) => setTimeout(r, 4000))]).then(reveal);
+const bgImg = new Image();
+bgImg.src = 'assets/videoclub-bg.webp';
+const bgReady = bgImg.decode().catch(() => {});
+Promise.race([Promise.all([sheetReady, bgReady, document.fonts.ready]), new Promise((r) => setTimeout(r, 4000))]).then(reveal);
 sheetReady.then((ok) => { if (ok && revealed) tapes.forEach(paint); });
 })();
