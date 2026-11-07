@@ -98,6 +98,8 @@ body::before {
   z-index: 20;
 }
 .top .month { justify-self: start; }
+.top .gh { justify-self: end; gap: 6px; color: var(--ink); transition: border-color .2s var(--ease), scale .12s var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .top .gh:hover { border-color: var(--accent); } }
 .tagline {
   position: absolute;
   left: 50%;
@@ -201,6 +203,19 @@ body::before {
   overflow: hidden;
 }
 .sp svg, .cv svg { display: block; width: 100%; height: 100%; }
+.bk {
+  position: absolute;
+  width: var(--d);
+  height: var(--H);
+  left: calc(var(--d) / -2);
+  top: calc(var(--H) / -2);
+  transform: rotateY(-90deg) translateZ(calc(var(--ws) / 2));
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 2px;
+}
+/* Flanc dans l'ombre, comme la jaquette vue de biais */
+.bk::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(0, 0, 0, .35); }
 .tp {
   position: absolute;
   width: var(--ws);

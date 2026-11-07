@@ -356,9 +356,13 @@ for (let v = 0; v < LOOP; v++) {
   // Dessus de la boîte : la caméra est un peu au-dessus des cassettes, on le voit.
   const tp = document.createElement('div');
   tp.className = 'tp';
-  el.append(sp, cv, tp);
+  // Flanc gauche : la jaquette n'est que sur le flanc droit, et la caméra voit le flanc gauche des
+  // cassettes à droite du centre. Sans lui, elles paraissaient plates.
+  const bk = document.createElement('div');
+  bk.className = 'bk';
+  el.append(sp, cv, tp, bk);
   stage.append(el);
-  const t = { v, el, sp, cv, lift: 0, visible: true };
+  const t = { v, el, sp, cv, bk, lift: 0, visible: true };
   el.addEventListener('pointerenter', () => { hover = v; });
   el.addEventListener('pointerleave', () => { if (hover === v) hover = -1; });
   el.addEventListener('click', () => onTapeClick(t));
@@ -493,9 +497,11 @@ function unwrap(i) {
   unwrappedUpTo = i + 1;
   try { localStorage.setItem(UNWRAP_KEY, String(unwrappedUpTo)); } catch {}
   cursorFor = -1;
-  const gifts = tapes.filter((t) => t.v % N === i).flatMap((t) => [...t.el.querySelectorAll('.gift')]);
+  const mine = tapes.filter((t) => t.v % N === i);
+  const gifts = mine.flatMap((t) => [...t.el.querySelectorAll('.gift')]);
   const done = () => {
     gifts.forEach((g) => g.remove());
+    mine.forEach(paintSide);
     unwrapping = false;
     openDetail();
   };
@@ -895,8 +901,20 @@ requestAnimationFrame(frame);
 document.fonts.ready.then(placeIndicator);
 
 /* Chargement */
+// Flanc gauche en aplat : on ne le voit qu'en biais, sur quelques pixels. Papier et ruban pour les paquets.
+function paintSide(t) {
+  const i = t.v % N;
+  if (isWrapped(i)) {
+    const p = GIFT_PAPERS[i % GIFT_PAPERS.length];
+    // Le ruban horizontal de la tranche (y = 250 à 280 sur 840) fait le tour du paquet.
+    t.bk.style.background = `linear-gradient(180deg, transparent 29.8%, ${p.ribbon} 29.8%, ${p.ribbon} 33.3%, transparent 33.3%), ${p.bg}`;
+  } else {
+    t.bk.style.background = (palettes[i]?.spine || CATEGORIES[CONCEPTS[i].cat]).bg;
+  }
+}
 function paint(t) {
   const i = t.v % N;
+  paintSide(t);
   t.sp.innerHTML = spineHTML(t.v);
   t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i) + snowCap(474, i, 2, false) + (hasSticker(i) ? sticker(388, 742, 66, 10) : ''))
     + (isWrapped(i) ? giftHTML(474, 900, giftCover(i)) : '');
