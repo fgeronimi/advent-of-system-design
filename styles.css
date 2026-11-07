@@ -12,6 +12,7 @@
   --accent: var(--gold);
   --rule: rgba(241, 233, 216, .6);
   --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
   --H: min(46vh, 31vw);
   --sans: "Inter Tight", system-ui, sans-serif;
   --serif: "Newsreader", Georgia, serif;
@@ -28,7 +29,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; transition: scale .12s var(--ease-out); }
+/* `scale` et pas `transform` : il se compose avec les transforms posés en JS (bouton play, ampoules). */
+button:active { scale: .96; }
+:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 3px; }
 a { color: var(--ink); text-decoration: none; }
 @media (pointer: fine) {
   html, body, button, a { cursor: none; }
@@ -78,6 +82,7 @@ body::before {
   z-index: 45;
   pointer-events: none;
 }
+.snow.back { z-index: 5; }
 
 /* Top bar */
 .top {
@@ -138,13 +143,14 @@ body::before {
   transform-origin: 50% 0;
   transform: rotate(var(--r));
   pointer-events: auto;
-  transition: transform .5s var(--ease);
+  transition: transform .35s var(--ease), scale .12s var(--ease-out);
 }
 .bulb svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .bulb .glass { fill: #26302A; stroke: #3A463E; stroke-width: .8; }
 .bulb.lit .glass { fill: var(--c); stroke: none; filter: drop-shadow(0 0 4px var(--c)) drop-shadow(0 0 10px var(--c)); }
 .bulb.today .glass { animation: twinkle 2.4s ease-in-out infinite; }
-.bulb:hover, .bulb.current { transform: rotate(var(--r)) scale(1.3); }
+.bulb.current { transform: rotate(var(--r)) scale(1.3); }
+@media (hover: hover) and (pointer: fine) { .bulb:hover { transform: rotate(var(--r)) scale(1.3); } }
 @keyframes twinkle { 50% { filter: brightness(1.45) drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 16px var(--c)); } }
 @media (prefers-reduced-motion: reduce) { .bulb.today .glass { animation: none; } }
 
@@ -165,7 +171,7 @@ body::before {
   border: 1px solid var(--rule);
   margin-left: -1px;
   white-space: nowrap;
-  transition: color .45s var(--ease);
+  transition: color .3s var(--ease), scale .12s var(--ease-out);
 }
 .tabs button:first-of-type { margin-left: 0; }
 .tabs button.on { color: var(--cream); }
@@ -175,7 +181,7 @@ body::before {
   height: 23px;
   width: 0;
   background: var(--cranberry);
-  transition: width .6s var(--ease), transform .6s var(--ease);
+  transition: width .35s var(--ease), transform .35s var(--ease);
 }
 
 /* Shelf */
@@ -228,6 +234,7 @@ body::before {
 .sp .wear {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: inherit;
   pointer-events: none;
   background-image: var(--wear);
@@ -237,22 +244,20 @@ body::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
   border-radius: inherit;
   background: #000;
   opacity: var(--shade, 0);
   pointer-events: none;
 }
-/* Film plastique des cassettes pas encore ouvertes */
-.locked .sp::before, .locked .cv::before {
-  content: "";
+/* Papier cadeau des cassettes pas encore déballées, par-dessus la tranche et la jaquette */
+.gift {
   position: absolute;
   inset: 0;
   z-index: 1;
   border-radius: inherit;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    linear-gradient(112deg, transparent 18%, rgba(255, 255, 255, .38) 24%, transparent 31%, transparent 58%, rgba(255, 255, 255, .22) 63%, transparent 69%),
-    linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04));
 }
 
 /* Play ring */

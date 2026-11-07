@@ -62,7 +62,7 @@ const sheetCrop = ([x, y, w, h], dx, dy, dw, dh) =>
   `<svg x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="none">`
   + `<image href="${esc(SHEET.url)}" width="${SHEET.w}" height="${SHEET.h}"/></svg>`;
 
-function coverArt(c, i, sealed) {
+function coverArt(c, i) {
   const { bg, label } = CATEGORIES[c.cat];
   const cell = cellOf(c, i);
   // Sans palette (planche pas encore lue, ou file://), couleurs du thème.
@@ -95,24 +95,19 @@ function coverArt(c, i, sealed) {
     }
     out += `<text x="237" y="${cy - 8}" text-anchor="middle" dominant-baseline="central" font-family="${SERIF}" font-weight="600" font-size="168" letter-spacing="-4" fill="${CREAM}">${pad(i + 1)}</text>`;
   }
-  out += `<text x="34" y="846" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${textInk}">JOUR ${pad(i + 1)} · ${esc(label.toUpperCase())}</text>`;
+  // Sur un cartouche crème : posée directement sur l'illustration, la ligne se perdait dans le dessin.
+  const foot = `JOUR ${pad(i + 1)} · ${label.toUpperCase()}`;
+  out += `<rect x="24" y="824" width="${Math.round(foot.length * 10.6 + 22)}" height="32" fill="${CREAM}"/>`;
+  out += `<text x="35" y="846" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">${esc(foot)}</text>`;
   // Le badge VHS n'est dessiné que sans illustration : sur la planche, il est déjà imprimé.
   if (!cell) {
     out += `<rect x="372" y="818" width="70" height="38" fill="none" stroke="${INK}" stroke-width="2"/>`;
     out += `<text x="407" y="846" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="24" fill="${INK}">VHS</text>`;
   }
-  if (sealed) {
-    out += `<g transform="rotate(-12 360 470)">`
-      + `<circle cx="360" cy="470" r="64" fill="${INK}"/>`
-      + `<circle cx="360" cy="470" r="56" fill="none" stroke="${CREAM}" stroke-width="1.5" stroke-dasharray="3 4"/>`
-      + `<text x="360" y="456" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="12" letter-spacing="2" fill="${CREAM}">S’OUVRE LE</text>`
-      + `<text x="360" y="494" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="34" fill="${CREAM}">${i + 1} déc.</text>`
-      + `</g>`;
-  }
   return out;
 }
 
-function spineArt(c, i, sealed) {
+function spineArt(c, i) {
   const { bg, fg } = palettes[i]?.spine || CATEGORIES[c.cat];
   let out = `<rect width="142" height="840" fill="${bg}"/>`;
   out += `<rect x="7" y="7" width="128" height="826" fill="none" stroke="${fg}" stroke-opacity=".35" stroke-width="1.5"/>`;
@@ -121,14 +116,11 @@ function spineArt(c, i, sealed) {
   const t = c.title.toUpperCase();
   // dominant-baseline="central" centre la boîte em, pas les capitales : le titre penchait à droite.
   // On pose la ligne de base à une demi-hauteur de capitale (0,7 em pour Newsreader) de l'axe.
-  out += `<text transform="translate(${71 - 60 * 0.35} 162) rotate(90)" font-family="${SERIF}" font-weight="600" font-size="60" letter-spacing="-.5" fill="${fg}"${fit(t, 60, 0.62, 530)}>${esc(t)}</text>`;
+  // Même chasse de 0,74 em que sur la jaquette : à 0,62, « RATE LIMITING » débordait sans être resserré.
+  out += `<text transform="translate(${71 - 60 * 0.35} 162) rotate(90)" font-family="${SERIF}" font-weight="600" font-size="60" letter-spacing="-.5" fill="${fg}"${fit(t, 60, 0.74, 530)}>${esc(t)}</text>`;
   out += `<text x="71" y="738" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2.5" fill="${fg}">JOUR ${pad(i + 1)}</text>`;
   out += `<rect x="26" y="758" width="90" height="40" fill="none" stroke="${fg}" stroke-width="2"/>`;
   out += `<text x="71" y="787" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="26" fill="${fg}">VHS</text>`;
-  if (sealed) {
-    out += `<g transform="rotate(-8 71 620)"><rect x="-12" y="600" width="166" height="40" fill="${CREAM}"/>`
-      + `<text x="71" y="626" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="15" letter-spacing="2" fill="${INK}">${pad(i + 1)} DÉC</text></g>`;
-  }
   return out;
 }
 
@@ -238,12 +230,12 @@ document.documentElement.style.setProperty('--wear', wearTexture);
 
 /* Neige posée */
 // Un bourrelet de neige sur le haut de chaque face, dessiné dans le SVG pour suivre la 3D sans calcul.
-// Les cassettes scellées sont bien enneigées, celles déjà ouvertes n'en gardent qu'un peu.
+// Les paquets pas encore ouverts sont bien enneigés, les cassettes déballées n'en gardent qu'un peu.
 // Pas de dégradé ni de filtre : ils exigeraient des id, dupliqués d'une copie de cassette à l'autre.
-function snowCap(w, i, salt) {
+function snowCap(w, i, salt, deep) {
   let seed = (i + 1) * 7919 + salt;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const depth = (isLocked(i) ? 26 : 10) * (w / 142) ** 0.35;
+  const depth = (deep ? 26 : 10) * (w / 142) ** 0.35;
   const steps = Math.max(8, Math.round(w / 18));
   const ys = Array.from({ length: steps + 1 }, () => depth * (0.6 + rnd() * 0.45));
   // Deux ou trois coulures plus longues, jamais collées aux bords.
@@ -263,11 +255,106 @@ function snowCap(w, i, salt) {
     + `<path d="${edge(-depth * 0.45)}" fill="#FFFFFF"/>`;
 }
 
+/* Paquets cadeaux */
+// Le jour J, la cassette reste emballée jusqu'au premier clic : on la déballe une fois, ensuite elle
+// reste ouverte. Le dernier jour déballé est retenu dans le navigateur.
+const UNWRAP_KEY = `aosd-deballe-${ADVENT_YEAR}`;
+let unwrappedUpTo = 0;
+try { unwrappedUpTo = parseInt(localStorage.getItem(UNWRAP_KEY), 10) || 0; } catch {}
+const isWrapped = (i) => isLocked(i) || (i === unlocked - 1 && unwrappedUpTo < unlocked);
+
+const GIFT_PAPERS = [
+  { bg: '#A8262D', stripe: '#BC3A3A', dot: '#E0B25A', ribbon: '#E0B25A', fold: '#A9803A' },
+  { bg: '#1F5C3A', stripe: '#2A6B47', dot: '#F1E9D8', ribbon: '#C8343A', fold: '#8C1F26' },
+  { bg: '#EFE6D2', stripe: '#E4D7BC', dot: '#A8262D', ribbon: '#1F5C3A', fold: '#123A24' },
+];
+// Rayures à 45° et pois entre les rayures, dessinés en un seul path chacun pour ne pas multiplier
+// les nœuds sur 72 cassettes.
+function giftPaper(w, h, p) {
+  const period = 44, sw = 16;
+  let stripes = '', dots = '';
+  for (let k = 0; k < w + h; k += period) stripes += `M${k} 0h${sw}l${-h} ${h}h${-sw}Z`;
+  const c = sw + (period - sw) / 2;
+  for (let y = period / 2; y < h; y += period / 2) {
+    for (let x = mod(c - y, period); x < w; x += period) dots += `M${x - 3} ${y}a3 3 0 1 0 6 0a3 3 0 1 0 -6 0`;
+  }
+  return `<rect width="${w}" height="${h}" fill="${p.bg}"/><path d="${stripes}" fill="${p.stripe}"/><path d="${dots}" fill="${p.dot}"/>`;
+}
+function bow(cx, cy, k, p) {
+  const loop = (sx) => `M${cx} ${cy}c${sx * -22 * k} ${-36 * k} ${sx * -60 * k} ${-32 * k} ${sx * -54 * k} ${-4 * k}c${sx * 4 * k} ${18 * k} ${sx * 36 * k} ${12 * k} ${sx * 54 * k} ${4 * k}Z`;
+  const inner = (sx) => `M${cx} ${cy}c${sx * -14 * k} ${-20 * k} ${sx * -36 * k} ${-20 * k} ${sx * -34 * k} ${-6 * k}c${sx * 6 * k} ${6 * k} ${sx * 22 * k} ${6 * k} ${sx * 34 * k} ${6 * k}Z`;
+  const tail = (sx) => `M${cx} ${cy}l${sx * -26 * k} ${46 * k}l${sx * 8 * k} ${-2 * k}l${sx * 6 * k} ${9 * k}l${sx * 18 * k} ${-50 * k}Z`;
+  return `<path d="${tail(1)}${tail(-1)}" fill="${p.fold}"/>`
+    + `<path d="${loop(1)}${loop(-1)}" fill="${p.ribbon}"/>`
+    + `<path d="${inner(1)}${inner(-1)}" fill="${p.fold}" opacity=".55"/>`
+    + `<rect x="${cx - 9 * k}" y="${cy - 9 * k}" width="${18 * k}" height="${18 * k}" rx="${5 * k}" fill="${p.ribbon}" stroke="${p.fold}" stroke-width="${1.5 * k}"/>`;
+}
+const ribbonV = (x, w, h, p) => `<rect x="${x}" width="${w}" height="${h}" fill="${p.ribbon}"/><path d="M${x + 3} 0V${h}M${x + w - 3} 0V${h}" stroke="${p.fold}" stroke-width="1.5"/>`;
+const ribbonH = (y, h, w, p) => `<rect y="${y}" width="${w}" height="${h}" fill="${p.ribbon}"/><path d="M0 ${y + 3}H${w}M0 ${y + h - 3}H${w}" stroke="${p.fold}" stroke-width="1.5"/>`;
+// Étiquette en carton accrochée au nœud par une ficelle.
+function giftTag(x, y, w, h, rot, from, inner) {
+  return `<path d="M${from[0]} ${from[1]}Q${(from[0] + x + w / 2) / 2 - 20} ${(from[1] + y) / 2 + 30} ${x + w / 2} ${y + 14}" fill="none" stroke="${INK}" stroke-width="1.5" opacity=".7"/>`
+    + `<g transform="rotate(${rot} ${x + w / 2} ${y + h / 2})">`
+    + `<path d="M${x + 14} ${y}H${x + w - 14}L${x + w} ${y + 14}V${y + h}H${x}V${y + 14}Z" fill="${CREAM}" stroke="#000" stroke-opacity=".2"/>`
+    + `<circle cx="${x + w / 2}" cy="${y + 14}" r="4" fill="#00000055"/>`
+    + inner(x + w / 2, y)
+    + `</g>`;
+}
+function giftSpine(i) {
+  const p = GIFT_PAPERS[i % GIFT_PAPERS.length];
+  return giftPaper(142, 840, p) + ribbonV(56, 30, 840, p) + ribbonH(250, 30, 142, p)
+    + giftTag(30, 330, 82, 118, -6, [71, 270], (cx, y) =>
+      `<text x="${cx}" y="${y + 70}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="40" fill="${INK}">${pad(i + 1)}</text>`
+      + `<text x="${cx}" y="${y + 96}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">DÉC</text>`)
+    + bow(71, 265, 1.1, p) + snowCap(142, i, 1, true);
+}
+function giftCover(i) {
+  const p = GIFT_PAPERS[i % GIFT_PAPERS.length];
+  return giftPaper(474, 900, p) + ribbonV(300, 48, 900, p) + ribbonH(290, 48, 474, p)
+    + giftTag(70, 450, 236, 150, -8, [324, 314], (cx, y) =>
+      `<text x="${cx}" y="${y + 56}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">${isLocked(i) ? 'NE PAS OUVRIR AVANT LE' : 'À DÉBALLER CE'}</text>`
+      + `<text x="${cx}" y="${y + 112}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="48" fill="${INK}">${i + 1} déc.</text>`)
+    + bow(324, 314, 2, p) + snowCap(474, i, 2, true);
+}
+const giftHTML = (w, h, art) => `<div class="gift">${svg(w, h, art)}</div>`;
+
+/* Stickers de vidéoclub */
+// Coups de cœur du vidéoclub, en numéros de jour.
+const STAFF_PICKS = new Set([3, 14, 21]);
+function stickerOf(i) {
+  if (i === unlocked - 1) return 'new';
+  if (!isLocked(i) && STAFF_PICKS.has(i + 1)) return 'pick';
+  return null;
+}
+// Étoile fluo pour la nouveauté, pastille rose pour le coup de cœur, posées de travers comme à la main.
+function sticker(kind, cx, cy, r, rot) {
+  const k = r / 42;
+  const t = (y, size, txt, font = SANS) => `<text x="${cx}" y="${cy + y * k}" text-anchor="middle" font-family="${font}" font-weight="700" font-size="${size * k}" letter-spacing="${0.5 * k}" fill="${INK}">${txt}</text>`;
+  let out = `<g transform="rotate(${rot} ${cx} ${cy})">`;
+  if (kind === 'new') {
+    let d = '';
+    for (let a = 0; a < 20; a++) {
+      const rr = a % 2 ? r * 0.84 : r;
+      const th = (a / 20) * Math.PI * 2;
+      d += `${a ? 'L' : 'M'}${(cx + rr * Math.cos(th)).toFixed(1)} ${(cy + rr * Math.sin(th)).toFixed(1)}`;
+    }
+    out += `<path d="${d}Z" fill="#000" opacity=".25" transform="translate(${2 * k} ${3 * k})"/><path d="${d}Z" fill="#FF7A1A"/>`
+      + t(-4, 15, 'NOUVEAU') + t(14, 11, '★ ★ ★');
+  } else {
+    out += `<circle cx="${cx + 2 * k}" cy="${cy + 3 * k}" r="${r}" fill="#000" opacity=".25"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#FF4F8B"/>`
+      + `<circle cx="${cx}" cy="${cy}" r="${r - 5 * k}" fill="none" stroke="${INK}" stroke-width="${1.2 * k}" stroke-dasharray="${2 * k} ${3 * k}"/>`
+      + t(-9, 12, 'COUP DE') + t(7, 14, 'CŒUR') + t(22, 12, '♥');
+  }
+  return out + '</g>';
+}
+
 function spineHTML(v) {
   const i = v % N;
   const y = (v * 37) % 100;
   const flip = v % 3 === 1 ? ' scale(-1, 1)' : v % 3 === 2 ? ' scale(1, -1)' : '';
-  return svg(142, 840, spineArt(CONCEPTS[i], i, isLocked(i)) + snowCap(142, i, 1))
+  const st = stickerOf(i);
+  return svg(142, 840, spineArt(CONCEPTS[i], i) + snowCap(142, i, 1, false) + (st ? sticker(st, 90, 752, 46, -12) : ''))
+    + (isWrapped(i) ? giftHTML(142, 840, giftSpine(i)) : '')
     + `<div class="wear" style="background-position: 0 ${y}%;${flip ? ` transform:${flip}` : ''}"></div>`;
 }
 
@@ -278,7 +365,7 @@ const tapes = [];
 for (let v = 0; v < LOOP; v++) {
   const i = v % N;
   const el = document.createElement('div');
-  el.className = 'tape' + (isLocked(i) ? ' locked' : '');
+  el.className = 'tape';
   const sp = document.createElement('div');
   sp.className = 'sp';
   const cv = document.createElement('div');
@@ -323,6 +410,7 @@ function F(r) {
 
 /* En-tête */
 $('.top .month').textContent = `Décembre ${ADVENT_YEAR}`;
+$('.foot .count').textContent = `${unlocked} / ${N} cassettes en rayon`;
 
 /* Guirlande */
 // Une ampoule par jour : la guirlande sert de compteur, chaque jour ouvert en allume une de plus.
@@ -357,11 +445,11 @@ function swapLine(mask, text, dir, instant) {
   const old = [...mask.children].filter((el) => !el._leaving);
   const next = Object.assign(document.createElement('span'), { textContent: text });
   mask.append(next);
-  next.animate([{ transform: `translateY(${dir * 105}%)` }, { transform: 'translateY(0)' }], { duration: 650, easing: EASE, fill: 'both' });
+  next.animate([{ transform: `translateY(${dir * 105}%)` }, { transform: 'translateY(0)' }], { duration: 340, easing: EASE, fill: 'both' });
   for (const o of old) {
     o._leaving = true;
     const from = getComputedStyle(o).transform;
-    o.animate([{ transform: from === 'none' ? 'translateY(0)' : from }, { transform: `translateY(${-dir * 105}%)` }], { duration: 650, easing: EASE, fill: 'both' })
+    o.animate([{ transform: from === 'none' ? 'translateY(0)' : from }, { transform: `translateY(${-dir * 105}%)` }], { duration: 340, easing: EASE, fill: 'both' })
       .onfinish = () => o.remove();
   }
 }
@@ -402,7 +490,7 @@ function setActive(i, dir, instant) {
 }
 
 function goBy(delta) {
-  if (isOpen) return;
+  if (isOpen || unwrapping) return;
   T = Math.round(T) + delta;
 }
 const shortest = (i) => mod(i - mod(Math.round(T), N) + N / 2, N) - N / 2;
@@ -424,9 +512,38 @@ $('.arrow.next').addEventListener('click', () => goBy(1));
 $('.play').addEventListener('click', () => tryOpen());
 
 function tryOpen() {
-  if (isOpen) return;
-  if (isLocked(mod(Math.round(T), N))) { shakeAt = performance.now(); return; }
+  if (isOpen || unwrapping) return;
+  const i = mod(Math.round(T), N);
+  if (isLocked(i)) { shakeAt = performance.now(); return; }
+  if (isWrapped(i)) { unwrap(i); return; }
   openDetail();
+}
+
+// Le paquet frissonne, puis le papier se déchire de haut en bas et la fiche s'ouvre.
+let unwrapping = false;
+function unwrap(i) {
+  unwrapping = true;
+  unwrappedUpTo = i + 1;
+  try { localStorage.setItem(UNWRAP_KEY, String(unwrappedUpTo)); } catch {}
+  cursorFor = -1;
+  const gifts = tapes.filter((t) => t.v % N === i).flatMap((t) => [...t.el.querySelectorAll('.gift')]);
+  const done = () => {
+    gifts.forEach((g) => g.remove());
+    unwrapping = false;
+    openDetail();
+  };
+  if (reduce) { done(); return; }
+  shakeAt = performance.now();
+  // Bord déchiré en dents de scie, légèrement en biais ; la partie gardée est sous le bord.
+  const edge = (base) => Array.from({ length: 11 }, (_, k) => `${k * 10}% ${base + k * 1.2 + (k % 2 ? 3 : -3)}%`).join(',');
+  const clip = (base) => `polygon(${edge(base)},100% 100%,0% 100%)`;
+  let last;
+  for (const g of gifts) {
+    last = g.animate([{ clipPath: clip(-20) }, { clipPath: clip(110) }],
+      { duration: 650, delay: 260, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+  }
+  if (last) last.onfinish = () => setTimeout(done, 120);
+  else done();
 }
 
 let suppressClick = false;
@@ -440,7 +557,7 @@ function onTapeClick(t) {
 /* Molette */
 let wheelTimer = 0;
 addEventListener('wheel', (e) => {
-  if (isOpen) return;
+  if (isOpen || unwrapping) return;
   e.preventDefault();
   const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
   T += delta / (ws + gap) * 0.5;
@@ -451,7 +568,7 @@ addEventListener('wheel', (e) => {
 /* Glisser */
 let down = null;
 shelf.addEventListener('pointerdown', (e) => {
-  if (isOpen || e.button !== 0) return;
+  if (isOpen || unwrapping || e.button !== 0) return;
   down = { x: e.clientX, T0: T };
 });
 const endDrag = () => {
@@ -575,7 +692,7 @@ function openDetail() {
   $('.d-why').textContent = c.why || '';
   $('.d-why-line').style.display = c.why ? '' : 'none';
   $('.d-read').style.display = c.body ? '' : 'none';
-  pArt.innerHTML = coverArt(c, i, false);
+  pArt.innerHTML = coverArt(c, i);
   circles.forEach((el) => el.setAttribute('r', 0));
 
   const { origin, clip } = coverInset();
@@ -586,15 +703,15 @@ function openDetail() {
   detail.animate([
     { clipPath: clip, transform: `rotate(${TILT_Z}deg)` },
     { clipPath: 'inset(0px 0px 0px 0px round 0px)', transform: 'rotate(0deg)' },
-  ], { duration: reduce ? 1 : 1050, easing: SHEET_EASE, fill: 'both' });
+  ], { duration: reduce ? 1 : 750, easing: SHEET_EASE, fill: 'both' });
 
   lines.forEach((el, k) => el.animate(
     [{ transform: 'translateY(110%)' }, { transform: 'translateY(0)' }],
-    { duration: reduce ? 1 : 900, delay: reduce ? 0 : 620 + k * 75, easing: EASE, fill: 'both' },
+    { duration: reduce ? 1 : 700, delay: reduce ? 0 : 350 + k * 50, easing: EASE, fill: 'both' },
   ));
 
   cancelAnimationFrame(inkRaf);
-  inkStart = performance.now() + (reduce ? -5000 : 520);
+  inkStart = performance.now() + (reduce ? -5000 : 300);
   inkRaf = requestAnimationFrame(inkFrame);
   $('.close').focus({ preventScroll: true });
 }
@@ -608,7 +725,7 @@ function closeDetail(then) {
   detail.animate([
     { clipPath: 'inset(0px 0px 0px 0px round 0px)', transform: 'rotate(0deg)' },
     { clipPath: clip, transform: `rotate(${TILT_Z}deg)` },
-  ], { duration: reduce ? 1 : 850, easing: SHEET_EASE, fill: 'both' }).onfinish = () => {
+  ], { duration: reduce ? 1 : 420, easing: SHEET_EASE, fill: 'both' }).onfinish = () => {
     detail.style.visibility = 'hidden';
     detail.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     cancelAnimationFrame(inkRaf);
@@ -625,41 +742,65 @@ $('.d-read').addEventListener('click', () => bodyEl.scrollIntoView({ behavior: r
 /* Neige qui tombe */
 // Un seul canvas pour tous les flocons : en CSS, au-delà d'une dizaine d'éléments animés, ça ne tient plus.
 // Trois plans de profondeur, du petit flocon lent du fond au gros flocon rapide du premier plan.
-const snowCv = $('.snow');
-const snowCtx = snowCv.getContext('2d');
+// Les deux plans du fond tombent derrière l'étagère, seul le premier plan passe devant : la neige
+// ne brouille plus les titres et l'étagère gagne en profondeur.
+const snowCvs = [$('.snow.back'), $('.snow.front')];
+const snowCtxs = snowCvs.map((cv) => cv.getContext('2d'));
 const LAYERS = [
-  { r: [0.6, 1.2], vy: [18, 30], a: 0.35 },
-  { r: [1.2, 2], vy: [32, 52], a: 0.6 },
-  { r: [2, 3.2], vy: [58, 85], a: 0.85 },
+  { r: [0.6, 1.2], vy: [18, 30], a: 0.35, front: false },
+  { r: [1.2, 2], vy: [32, 52], a: 0.6, front: false },
+  { r: [2.6, 4.2], vy: [58, 85], a: 0.85, front: true },
 ];
+// Flocon flou pré-rendu : les gros flocons du premier plan sont hors de la mise au point, comme filmés.
+const softFlake = document.createElement('canvas');
+softFlake.width = softFlake.height = 32;
+{
+  const g = softFlake.getContext('2d');
+  const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, '#fff');
+  grad.addColorStop(0.4, 'rgba(255,255,255,.85)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 32, 32);
+}
 let flakes = [];
 const between = ([a, b]) => a + Math.random() * (b - a);
 function resetSnow() {
   const dpr = Math.min(devicePixelRatio || 1, 2);
-  snowCv.width = innerWidth * dpr;
-  snowCv.height = innerHeight * dpr;
-  snowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  snowCvs.forEach((cv, k) => {
+    cv.width = innerWidth * dpr;
+    cv.height = innerHeight * dpr;
+    snowCtxs[k].setTransform(dpr, 0, 0, dpr, 0, 0);
+  });
   const count = Math.min(140, Math.round(innerWidth * innerHeight / 14000));
   flakes = Array.from({ length: count }, (_, k) => {
     const L = LAYERS[k % LAYERS.length];
-    return { x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: between(L.r), vy: between(L.vy), a: L.a, sway: 8 + Math.random() * 18, ph: Math.random() * 6.28 };
+    return { x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: between(L.r), vy: between(L.vy), a: L.a, front: L.front, sway: 8 + Math.random() * 18, ph: Math.random() * 6.28 };
   });
 }
 function drawSnow(dt, now) {
-  snowCtx.clearRect(0, 0, innerWidth, innerHeight);
+  const [back, front] = snowCtxs;
+  back.clearRect(0, 0, innerWidth, innerHeight);
+  front.clearRect(0, 0, innerWidth, innerHeight);
   // Sous la fiche, la neige ne se voit pas : inutile de la dessiner.
   if (reduce || isOpen) return;
+  back.fillStyle = '#fff';
   for (const f of flakes) {
     f.y += f.vy * dt;
-    if (f.y > innerHeight + 6) { f.y = -6; f.x = Math.random() * innerWidth; }
+    if (f.y > innerHeight + 10) { f.y = -10; f.x = Math.random() * innerWidth; }
     const x = f.x + Math.sin(now / 1000 * 0.9 + f.ph) * f.sway;
-    snowCtx.globalAlpha = f.a;
-    snowCtx.beginPath();
-    snowCtx.arc(x, f.y, f.r, 0, 6.2832);
-    snowCtx.fillStyle = '#fff';
-    snowCtx.fill();
+    if (f.front) {
+      front.globalAlpha = f.a;
+      front.drawImage(softFlake, x - f.r * 1.6, f.y - f.r * 1.6, f.r * 3.2, f.r * 3.2);
+    } else {
+      back.globalAlpha = f.a;
+      back.beginPath();
+      back.arc(x, f.y, f.r, 0, 6.2832);
+      back.fill();
+    }
   }
-  snowCtx.globalAlpha = 1;
+  back.globalAlpha = 1;
+  front.globalAlpha = 1;
 }
 if (!reduce) {
   resetSnow();
@@ -752,7 +893,7 @@ function frame(now) {
   if (cursorFor !== act) {
     cursorFor = act;
     cursor.classList.toggle('sealed', activeSealed);
-    cursorLabel.innerHTML = activeSealed ? `J-${daysLeft(act)}<br>SCELLÉ` : 'OUVRIR<br>▶';
+    cursorLabel.innerHTML = activeSealed ? `J-${daysLeft(act)}<br>SCELLÉ` : isWrapped(act) ? 'DÉBALLER<br>★' : 'OUVRIR<br>▶';
   }
 
   drawSnow(dt, now);
@@ -765,7 +906,9 @@ document.fonts.ready.then(placeIndicator);
 function paint(t) {
   const i = t.v % N;
   t.sp.innerHTML = spineHTML(t.v);
-  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i, isLocked(i)) + snowCap(474, i, 2));
+  const st = stickerOf(i);
+  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i) + snowCap(474, i, 2, false) + (st ? sticker(st, 388, 742, 66, 10) : ''))
+    + (isWrapped(i) ? giftHTML(474, 900, giftCover(i)) : '');
 }
 
 // Les cassettes ne sont dessinées qu'une fois les couleurs de la planche connues : sinon on voyait
