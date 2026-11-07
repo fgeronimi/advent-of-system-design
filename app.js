@@ -256,12 +256,12 @@ function snowCap(w, i, salt, deep) {
 }
 
 /* Paquets cadeaux */
-// Le jour J, la cassette reste emballée jusqu'au premier clic : on la déballe une fois, ensuite elle
-// reste ouverte. Le dernier jour déballé est retenu dans le navigateur.
+// Toutes les cassettes arrivent emballées. Une fois son jour venu, chacune se déballe au premier clic
+// et reste ouverte : les jours déballés sont retenus dans le navigateur.
 const UNWRAP_KEY = `aosd-deballe-${ADVENT_YEAR}`;
-let unwrappedUpTo = 0;
-try { unwrappedUpTo = parseInt(localStorage.getItem(UNWRAP_KEY), 10) || 0; } catch {}
-const isWrapped = (i) => isLocked(i) || (i === unlocked - 1 && unwrappedUpTo < unlocked);
+let unwrapped = new Set();
+try { unwrapped = new Set(JSON.parse(localStorage.getItem(UNWRAP_KEY)) || []); } catch {}
+const isWrapped = (i) => !unwrapped.has(i + 1);
 
 const GIFT_PAPERS = [
   { bg: '#A8262D', stripe: '#BC3A3A', dot: '#E0B25A', ribbon: '#E0B25A', fold: '#A9803A' },
@@ -312,7 +312,7 @@ function giftCover(i) {
   const p = GIFT_PAPERS[i % GIFT_PAPERS.length];
   return giftPaper(474, 900, p) + ribbonV(300, 48, 900, p) + ribbonH(290, 48, 474, p)
     + giftTag(70, 450, 236, 150, -8, [324, 314], (cx, y) =>
-      `<text x="${cx}" y="${y + 56}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">${isLocked(i) ? 'NE PAS OUVRIR AVANT LE' : 'À DÉBALLER CE'}</text>`
+      `<text x="${cx}" y="${y + 56}" text-anchor="middle" font-family="${SANS}" font-weight="600" font-size="13" letter-spacing="2" fill="${INK}">${isLocked(i) ? 'NE PAS OUVRIR AVANT LE' : 'À DÉBALLER · SORTIE LE'}</text>`
       + `<text x="${cx}" y="${y + 112}" text-anchor="middle" font-family="${SERIF}" font-weight="600" font-size="48" fill="${INK}">${i + 1} déc.</text>`)
     + bow(324, 314, 2, p) + snowCap(474, i, 2, true);
 }
@@ -490,12 +490,13 @@ function tryOpen() {
   openDetail();
 }
 
-// Le paquet frissonne, puis le papier se déchire de haut en bas et la fiche s'ouvre.
+// Le paquet frissonne, puis le papier se déchire de haut en bas. La fiche ne s'ouvre pas : on découvre
+// d'abord la jaquette, un second clic l'ouvre.
 let unwrapping = false;
 function unwrap(i) {
   unwrapping = true;
-  unwrappedUpTo = i + 1;
-  try { localStorage.setItem(UNWRAP_KEY, String(unwrappedUpTo)); } catch {}
+  unwrapped.add(i + 1);
+  try { localStorage.setItem(UNWRAP_KEY, JSON.stringify([...unwrapped])); } catch {}
   cursorFor = -1;
   const mine = tapes.filter((t) => t.v % N === i);
   const gifts = mine.flatMap((t) => [...t.el.querySelectorAll('.gift')]);
@@ -503,7 +504,7 @@ function unwrap(i) {
     gifts.forEach((g) => g.remove());
     mine.forEach(paintSide);
     unwrapping = false;
-    openDetail();
+    cursorFor = -1;
   };
   if (reduce) { done(); return; }
   shakeAt = performance.now();
@@ -515,7 +516,7 @@ function unwrap(i) {
     last = g.animate([{ clipPath: clip(-20) }, { clipPath: clip(110) }],
       { duration: 650, delay: 260, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
   }
-  if (last) last.onfinish = () => setTimeout(done, 120);
+  if (last) last.onfinish = done;
   else done();
 }
 
@@ -878,7 +879,8 @@ function frame(now) {
   cx += (mx - cx) * ac;
   cy += (my - cy) * ac;
   cursor.style.transform = `translate3d(${cx}px,${cy}px,0)`;
-  const overBtn = overEl && overEl.closest && overEl.closest('button, a') && !overEl.closest('.shelf');
+  // Le bouton lecture est posé sur la jaquette : il garde le grand rond « Ouvrir » de la jaquette.
+  const overBtn = overEl && overEl.closest && overEl.closest('button, a') && !overEl.closest('.shelf, .play');
   const overSpine = !isOpen && hover >= 0 && Math.abs(relative(hover, s)) > 0.5;
   const state = overBtn ? 'btn' : onCover ? 'open' : overSpine ? 'spine' : '';
   // Sur la fiche claire, le curseur passe à l'encre sombre : en crème, il disparaissait.

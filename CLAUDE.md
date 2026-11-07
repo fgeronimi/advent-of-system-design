@@ -8,7 +8,8 @@ Clic sur la cassette du jour → fiche d'explication. Contenu en français.
 Pas de build, pas de dépendance. Servir le dossier avec n'importe quel serveur statique
 (`npx serve .`, `python3 -m http.server`) ou ouvrir `index.html` directement.
 
-- `?day=N` simule le N décembre (`?day=24` pour tout ouvrir, `?day=0` pour tout sceller).
+- `?day=N` simule le N décembre (`?day=24` pour tout débloquer, `?day=0` pour tout sceller).
+- Toutes les cassettes sont emballées ; une cassette débloquée se déballe au premier clic, les jours déballés sont gardés dans `localStorage` (`aosd-deballe-<année>`).
 
 ## Architecture
 

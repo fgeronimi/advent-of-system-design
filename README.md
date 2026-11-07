@@ -38,8 +38,8 @@ npx serve .
 
 Les cassettes se débloquent selon la date. Pour tester sans attendre :
 
-- `?day=N` simule le N décembre (`?day=24` ouvre tout, `?day=0` scelle tout).
-- La cassette du jour ne se déballe qu’une fois par navigateur. Pour revoir le déballement :
+- `?day=N` simule le N décembre (`?day=24` rend les 24 cassettes déballables, `?day=0` scelle tout).
+- Chaque cassette ne se déballe qu’une fois par navigateur. Pour tout remballer :
   `localStorage.removeItem('aosd-deballe-2026')` dans la console.
 
 ## Contribuer
