@@ -14,6 +14,8 @@
   --ease: cubic-bezier(.2, .8, .2, 1);
   --ease-out: cubic-bezier(.23, 1, .32, 1);
   --H: min(46vh, 31vw);
+  /* Axe vertical de la scène, remonté depuis le retrait de la guirlande. */
+  --mid: calc(50% - 40px);
   --sans: "Inter Tight", system-ui, sans-serif;
   --serif: "Newsreader", Georgia, serif;
 }
@@ -96,6 +98,20 @@ body::before {
   z-index: 20;
 }
 .top .month { justify-self: start; }
+.tagline {
+  position: absolute;
+  left: 50%;
+  top: 76px;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100vw - 64px);
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--muted);
+}
 .logo {
   display: flex;
   flex-direction: column;
@@ -119,46 +135,12 @@ body::before {
   padding-left: .34em;
 }
 
-/* Guirlande */
-.garland {
-  position: fixed;
-  left: 0; right: 0;
-  top: calc(50% - var(--H) / 2 - 144px);
-  height: 52px;
-  z-index: 20;
-  pointer-events: none;
-}
-.garland .wire {
-  position: absolute;
-  left: 0; top: 0;
-  width: 100%; height: 40px;
-  overflow: visible;
-}
-.garland .wire path { fill: none; stroke: #3A463E; stroke-width: 1.5; }
-.bulb {
-  position: absolute;
-  top: 19px;
-  width: 14px; height: 23px;
-  margin-left: -7px;
-  transform-origin: 50% 0;
-  transform: rotate(var(--r));
-  pointer-events: auto;
-  transition: transform .35s var(--ease), scale .12s var(--ease-out);
-}
-.bulb svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.bulb .glass { fill: #26302A; stroke: #3A463E; stroke-width: .8; }
-.bulb.lit .glass { fill: var(--c); stroke: none; filter: drop-shadow(0 0 4px var(--c)) drop-shadow(0 0 10px var(--c)); }
-.bulb.today .glass { animation: twinkle 2.4s ease-in-out infinite; }
-.bulb.current { transform: rotate(var(--r)) scale(1.3); }
-@media (hover: hover) and (pointer: fine) { .bulb:hover { transform: rotate(var(--r)) scale(1.3); } }
-@keyframes twinkle { 50% { filter: brightness(1.45) drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 16px var(--c)); } }
-@media (prefers-reduced-motion: reduce) { .bulb.today .glass { animation: none; } }
-
 /* Category tabs */
 .tabs {
   position: fixed;
   left: 50%;
-  top: calc(50% - var(--H) / 2 - 86px);
+  /* Jamais au-dessus de la phrase d'accroche, sur les écrans peu hauts. */
+  top: max(112px, calc(var(--mid) - var(--H) / 2 - 86px));
   transform: translateX(-50%);
   display: flex;
   z-index: 20;
@@ -188,7 +170,7 @@ body::before {
 .shelf {
   position: fixed;
   left: 0; right: 0;
-  top: calc(50% - var(--H) / 2 - 40px);
+  top: calc(var(--mid) - var(--H) / 2 - 40px);
   height: calc(var(--H) + 80px);
   perspective: 1800px;
   /* Caméra un peu au-dessus des cassettes : on voit le dessus des boîtes. */
@@ -297,7 +279,7 @@ body::before {
   position: fixed;
   left: 50%;
   /* Vue d'un peu au-dessus, la jaquette du centre descend ~0,09 H sous la ligne des cassettes. */
-  top: calc(50% + var(--H) * .59 + 30px);
+  top: calc(var(--mid) + var(--H) * .59 + 30px);
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -334,7 +316,7 @@ body::before {
 /* Arrows */
 .arrow {
   position: fixed;
-  top: calc(50% + var(--H) * .59 + 40px);
+  top: calc(var(--mid) + var(--H) * .59 + 40px);
   width: 44px; height: 44px;
   display: flex;
   align-items: center;
@@ -365,6 +347,7 @@ body::before {
   pointer-events: none;
 }
 @media (pointer: fine) { .cur.live { display: block; } }
+.cur.ink { --ink: #1A1712; }
 .cur .ring {
   position: absolute;
   inset: 0;
@@ -662,17 +645,16 @@ body::before {
   .top .progress { display: none; }
   .logo .main { font-size: 18px; }
   .logo .sub { font-size: 7.5px; }
+  .tagline { top: 58px; font-size: 13px; max-width: calc(100vw - 32px); }
   .lbl { font-size: 9px; }
   .tabs {
-    top: calc(50% - var(--H) / 2 - 70px);
+    top: calc(var(--mid) - var(--H) / 2 - 70px);
     max-width: calc(100vw - 32px);
     overflow-x: auto;
     scrollbar-width: none;
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tabs button { padding: 0 7px; }
-  .garland { top: calc(50% - var(--H) / 2 - 122px); }
-  .bulb { width: 10px; height: 17px; margin-left: -5px; }
   .cap-title { font-size: 24px; }
   .arrow.prev { left: 6px; }
   .arrow.next { right: 6px; }

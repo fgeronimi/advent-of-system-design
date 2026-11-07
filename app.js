@@ -318,42 +318,25 @@ function giftCover(i) {
 }
 const giftHTML = (w, h, art) => `<div class="gift">${svg(w, h, art)}</div>`;
 
-/* Stickers de vidéoclub */
-// Coups de cœur du vidéoclub, en numéros de jour.
-const STAFF_PICKS = new Set([3, 14, 21]);
-function stickerOf(i) {
-  if (i === unlocked - 1) return 'new';
-  if (!isLocked(i) && STAFF_PICKS.has(i + 1)) return 'pick';
-  return null;
-}
-// Étoile fluo pour la nouveauté, pastille rose pour le coup de cœur, posées de travers comme à la main.
-function sticker(kind, cx, cy, r, rot) {
+/* Sticker de vidéoclub */
+// Une seule pastille, sur la cassette du jour.
+const hasSticker = (i) => i === unlocked - 1;
+// Pastille rose fluo posée de travers, comme collée à la main.
+function sticker(cx, cy, r, rot) {
   const k = r / 42;
-  const t = (y, size, txt, font = SANS) => `<text x="${cx}" y="${cy + y * k}" text-anchor="middle" font-family="${font}" font-weight="700" font-size="${size * k}" letter-spacing="${0.5 * k}" fill="${INK}">${txt}</text>`;
-  let out = `<g transform="rotate(${rot} ${cx} ${cy})">`;
-  if (kind === 'new') {
-    let d = '';
-    for (let a = 0; a < 20; a++) {
-      const rr = a % 2 ? r * 0.84 : r;
-      const th = (a / 20) * Math.PI * 2;
-      d += `${a ? 'L' : 'M'}${(cx + rr * Math.cos(th)).toFixed(1)} ${(cy + rr * Math.sin(th)).toFixed(1)}`;
-    }
-    out += `<path d="${d}Z" fill="#000" opacity=".25" transform="translate(${2 * k} ${3 * k})"/><path d="${d}Z" fill="#FF7A1A"/>`
-      + t(-4, 15, 'NOUVEAU') + t(14, 11, '★ ★ ★');
-  } else {
-    out += `<circle cx="${cx + 2 * k}" cy="${cy + 3 * k}" r="${r}" fill="#000" opacity=".25"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#FF4F8B"/>`
-      + `<circle cx="${cx}" cy="${cy}" r="${r - 5 * k}" fill="none" stroke="${INK}" stroke-width="${1.2 * k}" stroke-dasharray="${2 * k} ${3 * k}"/>`
-      + t(-9, 12, 'COUP DE') + t(7, 14, 'CŒUR') + t(22, 12, '♥');
-  }
-  return out + '</g>';
+  return `<g transform="rotate(${rot} ${cx} ${cy})">`
+    + `<circle cx="${cx + 2 * k}" cy="${cy + 3 * k}" r="${r}" fill="#000" opacity=".25"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#FF4F8B"/>`
+    + `<circle cx="${cx}" cy="${cy}" r="${r - 5 * k}" fill="none" stroke="${INK}" stroke-width="${1.2 * k}" stroke-dasharray="${2 * k} ${3 * k}"/>`
+    + `<text x="${cx}" y="${cy + 3 * k}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="${22 * k}" letter-spacing="${1.5 * k}" fill="${INK}">NEW</text>`
+    + `<text x="${cx}" y="${cy + 21 * k}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="${13 * k}" fill="${INK}">♥</text>`
+    + '</g>';
 }
 
 function spineHTML(v) {
   const i = v % N;
   const y = (v * 37) % 100;
   const flip = v % 3 === 1 ? ' scale(-1, 1)' : v % 3 === 2 ? ' scale(1, -1)' : '';
-  const st = stickerOf(i);
-  return svg(142, 840, spineArt(CONCEPTS[i], i) + snowCap(142, i, 1, false) + (st ? sticker(st, 90, 752, 46, -12) : ''))
+  return svg(142, 840, spineArt(CONCEPTS[i], i) + snowCap(142, i, 1, false) + (hasSticker(i) ? sticker(90, 752, 46, -12) : ''))
     + (isWrapped(i) ? giftHTML(142, 840, giftSpine(i)) : '')
     + `<div class="wear" style="background-position: 0 ${y}%;${flip ? ` transform:${flip}` : ''}"></div>`;
 }
@@ -420,29 +403,6 @@ function F(r) {
 $('.top .month').textContent = `Décembre ${ADVENT_YEAR}`;
 $('.foot .count').textContent = `${unlocked} / ${N} cassettes en rayon`;
 
-/* Guirlande */
-// Une ampoule par jour : la guirlande sert de compteur, chaque jour ouvert en allume une de plus.
-const BULB_COLORS = ['#E0473F', '#E0B25A', '#4FA36B', '#F1E9D8'];
-const BULB_SVG = '<svg viewBox="0 0 16 26" aria-hidden="true"><rect x="5" y="0" width="6" height="6" rx="1" fill="#4A5246"/>'
-  + '<path class="glass" d="M8 5C13 5 14 12 13 17C12 22 10 25 8 25C6 25 4 22 3 17C2 12 3 5 8 5Z"/></svg>';
-const garland = $('.garland');
-garland.setAttribute('aria-label', `${unlocked} jours ouverts sur ${N}`);
-// Le fil pend entre deux crochets et chaque ampoule est accrochée au creux d'une boucle.
-const wire = Array.from({ length: N }, (_, k) => `Q${k * 100 + 50} 36 ${(k + 1) * 100} 4`).join(' ');
-garland.innerHTML = `<svg class="wire" viewBox="0 0 ${N * 100} 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 4 ${wire}" vector-effect="non-scaling-stroke"/></svg>`;
-const bulbs = CONCEPTS.map((c, i) => {
-  const b = document.createElement('button');
-  b.className = 'bulb' + (i < unlocked ? ' lit' : '') + (i === unlocked - 1 ? ' today' : '');
-  b.style.left = `${(i + 0.5) / N * 100}%`;
-  b.style.setProperty('--c', BULB_COLORS[i % BULB_COLORS.length]);
-  b.style.setProperty('--r', `${(i % 2 ? 1 : -1) * (5 + (i * 7) % 5)}deg`);
-  b.setAttribute('aria-label', `Jour ${i + 1} : ${c.title}`);
-  b.innerHTML = BULB_SVG;
-  b.addEventListener('click', () => goBy(shortest(i)));
-  garland.append(b);
-  return b;
-});
-
 /* Légende */
 const capTitle = $('.cap-title'), capSub = $('.cap-sub'), capDay = $('.cap-day');
 function swapLine(mask, text, dir, instant) {
@@ -493,7 +453,6 @@ function setActive(i, dir, instant) {
   swapLine(capTitle, c.title, dir, instant);
   swapLine(capSub, c.en, dir, instant);
   swapLine(capDay, dayLine(i), dir, instant);
-  bulbs.forEach((b, k) => b.classList.toggle('current', k === i));
   placeIndicator();
 }
 
@@ -843,7 +802,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  const W = innerWidth, shelfY = innerHeight / 2;
+  const W = innerWidth, shelfY = cam.sy;
 
   const k = dragging ? 18 : 5.2;
   s += (T - s) * (reduce ? 1 : 1 - Math.exp(-k * dt));
@@ -916,6 +875,8 @@ function frame(now) {
   const overBtn = overEl && overEl.closest && overEl.closest('button, a') && !overEl.closest('.shelf');
   const overSpine = !isOpen && hover >= 0 && Math.abs(relative(hover, s)) > 0.5;
   const state = overBtn ? 'btn' : onCover ? 'open' : overSpine ? 'spine' : '';
+  // Sur la fiche claire, le curseur passe à l'encre sombre : en crème, il disparaissait.
+  cursor.classList.toggle('ink', isOpen && !closing);
   if (state !== cursorState) {
     if (cursorState) cursor.classList.remove(cursorState);
     if (state) cursor.classList.add(state);
@@ -937,8 +898,7 @@ document.fonts.ready.then(placeIndicator);
 function paint(t) {
   const i = t.v % N;
   t.sp.innerHTML = spineHTML(t.v);
-  const st = stickerOf(i);
-  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i) + snowCap(474, i, 2, false) + (st ? sticker(st, 388, 742, 66, 10) : ''))
+  t.cv.innerHTML = svg(474, 900, coverArt(CONCEPTS[i], i) + snowCap(474, i, 2, false) + (hasSticker(i) ? sticker(388, 742, 66, 10) : ''))
     + (isWrapped(i) ? giftHTML(474, 900, giftCover(i)) : '');
 }
 
