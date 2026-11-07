@@ -370,7 +370,10 @@ for (let v = 0; v < LOOP; v++) {
   sp.className = 'sp';
   const cv = document.createElement('div');
   cv.className = 'cv';
-  el.append(sp, cv);
+  // Dessus de la boîte : la caméra est un peu au-dessus des cassettes, on le voit.
+  const tp = document.createElement('div');
+  tp.className = 'tp';
+  el.append(sp, cv, tp);
   stage.append(el);
   const t = { v, el, sp, cv, lift: 0, visible: true };
   el.addEventListener('pointerenter', () => { hover = v; });
@@ -379,7 +382,7 @@ for (let v = 0; v < LOOP; v++) {
   tapes.push(t);
 }
 
-let H = 0, ws = 0, d = 0, gap = 0;
+let H = 0, ws = 0, d = 0, gap = 0, cam = null, ps = 0;
 function measure() {
   H = $('#probe').getBoundingClientRect().height;
   ws = H * 142 / 840;
@@ -387,6 +390,11 @@ function measure() {
   gap = H * 0.03;
   stage.style.setProperty('--ws', ws + 'px');
   stage.style.setProperty('--d', d + 'px');
+  // Caméra de la scène 3D, lue dans le CSS pour projeter le bouton lecture sur la jaquette.
+  const cs = getComputedStyle(shelf);
+  const [ox, oy] = cs.perspectiveOrigin.split(' ').map(parseFloat);
+  const r = shelf.getBoundingClientRect();
+  cam = { p: parseFloat(cs.perspective), x: r.left + ox, y: r.top + oy, sy: r.top + r.height / 2 };
 }
 measure();
 addEventListener('resize', () => { measure(); placeIndicator(); });
@@ -889,9 +897,15 @@ function frame(now) {
     t.cv.style.setProperty('--shade', ((1 - o) * 0.5).toFixed(3));
   }
 
-  const ps = isOpen || activeSealed ? 0 : smooth(Math.max(0, 1 - Math.abs(T - s) * 3));
-  play.style.left = (W / 2 - 0.5 * d - 6) + 'px';
-  play.style.top = (shelfY + 0.36 * H) + 'px';
+  // Le bouton n'apparaît qu'une fois la cassette arrivée de face, et disparaît dès qu'elle repart.
+  const playOn = !isOpen && !activeSealed && Math.abs(T - s) < 0.04;
+  ps = playOn ? ps + (1 - ps) * (reduce ? 1 : 1 - Math.exp(-16 * dt)) : 0;
+  // Centre de la jaquette, projeté comme le fait la perspective CSS : la caméra est au-dessus des
+  // cassettes, une position fixe à l'écran tombait à côté.
+  const th = TILT_Z * Math.PI / 180, u = 0, v = 0;
+  const z = 0.2 * H + ws / 2, kp = cam.p / (cam.p - z);
+  play.style.left = (cam.x + (W / 2 + u * Math.cos(th) - v * Math.sin(th) - cam.x) * kp) + 'px';
+  play.style.top = (cam.y + (cam.sy + u * Math.sin(th) + v * Math.cos(th) - 0.025 * H - cam.y) * kp) + 'px';
   play.style.transform = `scale(${ps})`;
   play.style.visibility = ps < 0.01 ? 'hidden' : '';
 
