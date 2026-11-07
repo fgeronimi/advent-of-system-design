@@ -282,7 +282,7 @@ body::before {
 .caption {
   position: fixed;
   left: 50%;
-  top: calc(50% + var(--H) / 2 + 30px);
+  top: calc(50% + var(--H) / 2 + 66px);
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -319,7 +319,7 @@ body::before {
 /* Arrows */
 .arrow {
   position: fixed;
-  top: calc(50% + var(--H) / 2 + 40px);
+  top: calc(50% + var(--H) / 2 + 76px);
   width: 44px; height: 44px;
   display: flex;
   align-items: center;
@@ -584,10 +584,95 @@ body::before {
   align-items: center;
   justify-content: center;
 }
-.poster {
-  display: block;
+.poster-wrap {
+  position: relative;
   height: min(100%, 78vh);
   aspect-ratio: 474 / 900;
+}
+.poster { display: block; width: 100%; height: 100%; }
+
+/* Fiche de location agrafée à la boîte, qui déborde dans le vide à gauche de l'affiche */
+.ticket {
+  position: absolute;
+  right: 84%;
+  bottom: 18%;
+  width: 272px;
+  padding: 22px 20px 24px;
+  rotate: -4deg;
+  background: #FBF7EC;
+  color: #1A1712;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .04), 0 18px 36px -18px rgba(40, 25, 10, .45);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  /* Bord haut perforé, arraché du carnet à souches */
+  -webkit-mask: radial-gradient(circle 4px at 8px 0, transparent 98%, #000) -8px 0 / 16px 100% repeat-x;
+  mask: radial-gradient(circle 4px at 8px 0, transparent 98%, #000) -8px 0 / 16px 100% repeat-x;
+}
+.t-head { color: var(--accent); text-align: center; }
+.t-kind {
+  font-family: var(--serif);
+  font-size: 19px;
+  text-align: center;
+  padding: 6px 0 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed rgba(26, 23, 18, .35);
+}
+.t-no { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px; color: var(--muted); }
+.t-row { display: flex; align-items: baseline; gap: 6px; }
+.t-row span { color: var(--muted); }
+.t-row i { flex: 1; border-bottom: 1px dotted rgba(26, 23, 18, .4); translate: 0 -3px; }
+.t-row b { font-weight: 600; text-align: right; max-width: 60%; }
+.t-fine { margin-top: 14px; max-width: 52%; font-size: 10px; color: var(--muted); }
+.stamp {
+  position: absolute;
+  right: 16px;
+  bottom: 8px;
+  rotate: -9deg;
+  padding: 5px 12px 4px;
+  border: 2.5px double var(--cranberry);
+  color: var(--cranberry);
+  text-align: center;
+  mix-blend-mode: multiply;
+}
+.stamp span { display: block; font-family: var(--sans); font-weight: 700; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; line-height: 1; }
+.stamp small { display: block; font-size: 9.5px; letter-spacing: .12em; margin-top: 2px; }
+
+/* Étagère : planche de bois sous les cassettes, avec la réglette du rayon */
+.plank {
+  position: fixed;
+  left: 0; right: 0;
+  top: calc(50% + var(--H) / 2 - 6px);
+  height: 50px;
+  z-index: 9;
+  pointer-events: none;
+  background:
+    /* ombre portée des cassettes sur le dessus de la planche */
+    linear-gradient(180deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 14px) 0 0 / 100% 14px no-repeat,
+    /* dessus éclairé, puis chant de la planche */
+    linear-gradient(180deg, #7A5434 0 14px, #2A1A0E 14px 15px, transparent 15px),
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, .1) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #5A3B22, #3A2414);
+  box-shadow: 0 24px 40px -10px rgba(0, 0, 0, .7);
+}
+/* Neige accumulée sur le bord avant */
+.plank::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 11px;
+  height: 9px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='9' viewBox='0 0 120 9'%3E%3Cpath d='M0 3Q15 0 30 3T60 4T90 2T120 3V5Q110 9 100 6T78 8T60 5T40 7T20 5T0 6Z' fill='%23EEF2F5'/%3E%3C/svg%3E") 0 0 / 120px 9px repeat-x;
+}
+.plank-label {
+  position: absolute;
+  left: 50%;
+  top: 23px;
+  translate: -50% 0;
+  padding: 5px 14px;
+  background: var(--cream);
+  color: #1A1712;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .35);
 }
 
 #probe { position: absolute; visibility: hidden; width: 0; height: var(--H); }
@@ -622,8 +707,12 @@ body::before {
     gap: 24px;
     padding: 84px 22px 40px;
   }
-  .poster-col { position: static; order: -1; height: auto; }
-  .poster { height: 46svh; }
+  .poster-col { position: static; order: -1; height: auto; flex-direction: column; }
+  .poster-wrap { height: auto; aspect-ratio: auto; }
+  .poster { height: 46svh; width: auto; margin: 0 auto; }
+  .ticket { position: relative; right: auto; bottom: auto; margin: -28px auto 0; rotate: -2deg; }
+  .plank { height: 40px; }
+  .plank-label { top: 20px; }
   .hero { min-height: 0; }
   .d-title { font-size: 42px; }
   .d-pitch { font-size: 18px; }

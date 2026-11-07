@@ -35,6 +35,7 @@
   <button class="lbl" data-cat="today">Aujourd’hui</button>
 </nav>
 
+<div class="plank" aria-hidden="true"><span class="plank-label lbl">★ Nouveautés de décembre ★</span></div>
 <section class="shelf" aria-label="Étagère des cassettes">
   <div class="stage"></div>
 </section>
@@ -89,6 +90,7 @@
         <div class="body"></div>
       </div>
       <div class="poster-col">
+       <div class="poster-wrap">
         <svg class="poster" viewBox="0 0 474 900" aria-hidden="true">
           <defs>
             <filter id="ink" filterUnits="userSpaceOnUse" x="-200" y="-200" width="874" height="1300">
@@ -110,6 +112,17 @@
           </defs>
           <g clip-path="url(#posterClip)" mask="url(#inkMask)" class="p-art"></g>
         </svg>
+        <div class="ticket">
+          <div class="t-head lbl">Vidéoclub de l’Avent</div>
+          <div class="t-kind">Fiche de location <span class="t-no"></span></div>
+          <div class="t-row"><span>Titre</span><i></i><b class="t-title"></b></div>
+          <div class="t-row"><span>Rayon</span><i></i><b class="t-cat"></b></div>
+          <div class="t-row"><span>Loué le</span><i></i><b class="t-out"></b></div>
+          <div class="t-row"><span>À rendre</span><i></i><b class="t-back"></b></div>
+          <p class="t-fine">Retard : un incident en prod par jour.</p>
+          <div class="stamp" aria-hidden="true"><span>Loué</span><small class="t-stamp"></small></div>
+        </div>
+       </div>
       </div>
     </div>
   </div>

@@ -615,6 +615,8 @@ const scroller = $('.scroller');
 const lines = [...detail.querySelectorAll('.hero .dm > *')];
 const circles = [...detail.querySelectorAll('mask circle')];
 const pArt = $('.p-art');
+const ticket = $('.ticket');
+const stamp = $('.stamp');
 const bodyEl = $('.body');
 let inkStart = 0, inkRaf = 0, closing = false;
 
@@ -692,6 +694,12 @@ function openDetail() {
   $('.d-why').textContent = c.why || '';
   $('.d-why-line').style.display = c.why ? '' : 'none';
   $('.d-read').style.display = c.body ? '' : 'none';
+  $('.t-no').textContent = `N° ${ADVENT_YEAR}-${pad(i + 1)}`;
+  $('.t-title').textContent = c.title;
+  $('.t-cat').textContent = CATEGORIES[c.cat].label;
+  $('.t-out').textContent = `${i + 1} déc.`;
+  $('.t-back').textContent = i + 2 === 25 ? '25 déc. · Noël' : `${i + 2} déc.`;
+  $('.t-stamp').textContent = `${pad(i + 1)}·12·${String(ADVENT_YEAR).slice(2)}`;
   pArt.innerHTML = coverArt(c, i);
   circles.forEach((el) => el.setAttribute('r', 0));
 
@@ -709,6 +717,15 @@ function openDetail() {
     [{ transform: 'translateY(110%)' }, { transform: 'translateY(0)' }],
     { duration: reduce ? 1 : 700, delay: reduce ? 0 : 350 + k * 50, easing: EASE, fill: 'both' },
   ));
+
+  // Le ticket sort comme d'une imprimante de caisse, puis on le tamponne.
+  ticket.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }],
+    { duration: reduce ? 1 : 700, delay: reduce ? 0 : 500, easing: EASE, fill: 'both' });
+  stamp.animate([
+    { clipPath: 'inset(50% round 50%)', transform: 'scale(1.8)' },
+    { clipPath: 'inset(0% round 0%)', transform: 'scale(.94)', offset: 0.7 },
+    { clipPath: 'inset(0% round 0%)', transform: 'scale(1)' },
+  ], { duration: reduce ? 1 : 280, delay: reduce ? 0 : 1250, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'both' });
 
   cancelAnimationFrame(inkRaf);
   inkStart = performance.now() + (reduce ? -5000 : 300);
